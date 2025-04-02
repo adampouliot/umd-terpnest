@@ -7,6 +7,12 @@ from distance import get_walking_time
 @st.cache_data(ttl=3600)
 def get_apartment_data():
     return scrape_university_view()
+df = get_apartment_data()
+
+# TEMPORARY DEBUG
+st.write("Raw data from scraper:")
+st.write(df.head())
+
 
 st.set_page_config(
     page_title="TerpNest | UMD Apartment Finder",
