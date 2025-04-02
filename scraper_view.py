@@ -1,38 +1,67 @@
-import requests
-from bs4 import BeautifulSoup
+# scraper_view.py
 import pandas as pd
+from playwright.sync_api import sync_playwright
+from bs4 import BeautifulSoup
 
 def scrape_university_view():
-    url = "https://live-theview.com/rates-floorplans/"
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, "html.parser")
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto("https://live-theview.com/rates-floorplans/", wait_until="networkidle")
+        html = page.content()
+        browser.close()
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Get each floorplan section
+    sections = soup.find_all("div", class_="floorplan margin-pad big-bottom")
+    print("Found floorplan sections:", len(sections))
 
     data = []
 
-    cards = soup.find_all("div", class_="floor-plan-card")
-
-    for card in cards:
+    for section in sections:
         try:
-            name = card.find("h3").text.strip()
-            bedbath = card.find("span", class_="beds").text.strip()
-            price = card.find("span", class_="rate").text.strip().replace("Starting at", "").strip().replace("$", "").replace(",", "")
-            sqft = card.find("span", class_="sqft").text.strip().replace("Sq Ft", "").strip()
+            title_tag = section.find("h2")
+            price_tag = section.find("span", class_="special-rates")
 
-            beds, baths = bedbath.split("/")
+            if not title_tag or not price_tag:
+                continue
+
+            title = title_tag.get_text(strip=True)
+
+            # Infer bed/bath count
+            if "Studio" in title:
+                beds = 0
+                baths = 1
+            else:
+                try:
+                    beds = int(title.split(" Bedroom")[0].strip())
+                    baths = int(title.split(" Bedroom")[1].split(" Bath")[0].strip())
+                except:
+                    beds, baths = None, None  # fallback if parsing fails
+
+            price = int(price_tag.get_text(strip=True).replace("$", "").replace(",", ""))
 
             data.append({
-                "Name": f"University View - {name}",
-                "Price": int(price),
-                "Beds": int(beds.strip().split()[0]),
-                "Baths": int(baths.strip().split()[0]),
-                "Sqft": int(sqft),
+                "Name": f"University View - {title}",
+                "Price": price,
+                "Beds": beds,
+                "Baths": baths,
+                "Sqft": None,
                 "Address": "8400 Baltimore Ave, College Park, MD 20740"
             })
+
         except Exception as e:
-            print("Skipping a listing due to error:", e)
+            print("Skipping section due to error:", e)
             continue
 
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    df.drop_duplicates(subset=["Name", "Price"], inplace=True)
+    print(f"✅ Scraped {len(df)} unique floorplans")
+    df.to_csv("apartments.csv", index=False)
+    return df
+
+# Local debug
 if __name__ == "__main__":
     df = scrape_university_view()
     print(df)
