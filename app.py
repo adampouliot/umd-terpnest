@@ -98,7 +98,7 @@ def style_walk_time(val):
     except:
         return "color: black"
 
-    if minutes < 10:
+    if minutes < 15:
         return "color: green"
     elif minutes <= 20:
         return "color: orange"
