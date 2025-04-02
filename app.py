@@ -18,7 +18,7 @@ TerpNest is a free tool built by students, for students.
 - Lets you filter by **price, bedrooms, bathrooms, and square footage**
 - Shows you the **best deals instantly**
 
-**No more checking 10 websites**. No more guessing how far you'll be walking in the rain.
+💡 **No more checking 10 websites**. No more guessing how far you'll be walking in the rain.
 
 ---
 
@@ -30,7 +30,7 @@ from umd_schools import UMD_SCHOOLS
 from distance import get_walking_time
 st.markdown("---")
 
-st.title("Explore Available Apartments")
+st.title("Explore Availible Apartments")
 
 # Load apartment data
 df = pd.read_csv("apartments.csv")
@@ -50,12 +50,12 @@ filtered_df["Walk Time"] = filtered_df["Address"].apply(
     lambda addr: get_walking_time(addr, destination)
 )
 
-# Add Google Maps walking directions links
+# Add Google Maps links for walking directions
 filtered_df["Walk Link"] = filtered_df["Address"].apply(
     lambda addr: f"https://www.google.com/maps/dir/?api=1&destination={addr.replace(' ', '+')}&travelmode=walking"
 )
 
-# Hardcoded apartment site links
+# Add hardcoded apartment website links (based on name matching)
 apartment_links = {
     "University View": "https://live-theview.com",
     "Landmark": "https://landmarkcollegepark.com",
@@ -73,57 +73,17 @@ def find_link(name):
 
 filtered_df["Website"] = filtered_df["Name"].apply(find_link)
 
-# Build display version of the dataframe with markdown links
-display_df = filtered_df.copy()
-display_df["Name"] = display_df.apply(
+# Make name and walk time clickable
+filtered_df["Name"] = filtered_df.apply(
     lambda row: f"[{row['Name']}]({row['Website']})", axis=1
 )
-display_df["Walk Time"] = display_df.apply(
+filtered_df["Walk Time"] = filtered_df.apply(
     lambda row: f"[{row['Walk Time']}]({row['Walk Link']})", axis=1
 )
 
-# Final display
+
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to {school}:")
+# Define columns to show
 cols = ["Name", "Price", "Beds", "Baths", "Sqft", "Walk Time"]
-import streamlit.components.v1 as components
-
-html_table = "<table><thead><tr>"
-for col in cols:
-    html_table += f"<th>{col}</th>"
-html_table += "</tr></thead><tbody>"
-
-for _, row in display_df[cols].iterrows():
-    html_table += "<tr>"
-    for col in cols:
-        value = row[col]
-        if isinstance(value, str) and value.startswith("["):
-            # It's a markdown link like [Name](URL), convert to HTML
-            label = value.split("](")[0][1:]
-            url = value.split("](")[1][:-1]
-            value = f'<a href="{url}" target="_blank">{label}</a>'
-        html_table += f"<td>{value}</td>"
-    html_table += "</tr>"
-
-html_table += "</tbody></table>"
-
-st.write("### 📊 Sortable Apartment Table")
-components.html(f"""
-<div style="overflow-x: auto">
-    <style>
-        table {{
-            width: 100%;
-            border-collapse: collapse;
-        }}
-        th, td {{
-            border: 1px solid #444;
-            padding: 0.5rem;
-            text-align: left;
-        }}
-        th {{
-            background-color: #111;
-            color: #fff;
-        }}
-    </style>
-    {html_table}
-</div>
-""", height=600, scrolling=True)
+# Show markdown-rendered table
+st.markdown(display_df[cols].to_markdown(index=False), unsafe_allow_html=True)
