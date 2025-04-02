@@ -1,7 +1,13 @@
 import streamlit as st
 import pandas as pd
 from umd_schools import UMD_SCHOOLS
+from scraper_view import scrape_university_view
 from distance import get_walking_time
+from scraper_view import scrape_university_view
+
+@st.cache_data(ttl=3600)  # Cache result for 1 hour
+def get_apartment_data():
+    return scrape_university_view()
 
 st.set_page_config(
     page_title="TerpNest | UMD Apartment Finder",
@@ -32,8 +38,8 @@ TerpNest is a free tool built by students, for students.
 st.markdown("---")
 st.title("Explore Available Apartments")
 
-# Load data
-df = pd.read_csv("apartments.csv")
+# Load data from live scraper
+df = get_apartment_data()
 
 # Sidebar filters
 st.sidebar.header("Filter Your Search")
