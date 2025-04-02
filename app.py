@@ -88,36 +88,38 @@ filtered_df["walk time"] = filtered_df["address"].apply(
     lambda addr: get_walking_time(addr, destination)
 )
 
-# --- Display Table with Color Styling ---
+# --- Display Table with Clean Formatting ---
 cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "address", "walk time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
+# Format the display DataFrame as strings to control decimal places
+clean_df = display_df.copy()
+clean_df["beds"] = clean_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
+clean_df["baths"] = clean_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
+clean_df["price"] = clean_df["price"].apply(lambda x: f"${int(round(x)):,}")
+clean_df["sqft"] = clean_df["sqft"].apply(lambda x: f"{int(round(x)):,}")
+clean_df["$/sqft"] = clean_df["$/sqft"].apply(lambda x: f"{x:.2f}")
+
+# Color-style walk time column
 def style_walk_time(val):
     try:
         minutes = int(str(val).split()[0])
     except:
         return "color: black"
-
     if minutes < 15:
         return "color: green"
     elif minutes <= 20:
         return "color: orange"
     else:
         return "color: red"
-    
-clean_df = display_df.copy()
-clean_df["beds"] = clean_df["beds"].astype(int)
-clean_df["baths"] = clean_df["baths"].astype(int)
-clean_df["price"] = clean_df["price"].round(0).astype(int)
-clean_df["sqft"] = clean_df["sqft"].round(0).astype(int)
-clean_df["$/sqft"] = clean_df["$/sqft"].round(2)
 
-styled_df = display_df.style.applymap(style_walk_time, subset=["walk time"])
+styled_df = clean_df.style.applymap(style_walk_time, subset=["walk time"])
 
+# --- Show DataFrame ---
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to **{school}**:")
 st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
-# --- Optional CSV Download ---
+# --- CSV Download (use unformatted raw data) ---
 st.download_button(
     label="Download CSV",
     data=display_df.to_csv(index=False),
@@ -130,11 +132,11 @@ st.markdown("""
 ---
 ### Notes on the Data
 
-- Prices reflected **may not** include monthly utilities charges and additional fees
-- **Beds = 0** → Studio apartment (no separate bedroom)
-- **Beds = 0.5** → Shared bedroom (typically 2 people sharing a room)
-- **$/sqft** → Rent cost per square foot
-- **Walk Time** → Estimated walk from apartment to your selected UMD school
+- Prices reflected **may not** include monthly utilities charges and additional fees  
+- **Beds = 0** → Studio apartment (no separate bedroom)  
+- **Beds = 0.5** → Shared bedroom (typically 2 people sharing a room)  
+- **$/sqft** → Rent cost per square foot  
+- **Walk Time** → Estimated walk from apartment to your selected UMD school  
 
 This data is pulled directly from apartment websites near UMD and refreshed regularly.
 """)
