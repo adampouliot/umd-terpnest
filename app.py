@@ -47,7 +47,6 @@ st.markdown("---")
 st.title("Explore Available Apartments")
 
 # --- Fallback check ---
-# Normalize column names
 df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
 if df.empty or "price" not in df.columns:
@@ -74,12 +73,25 @@ filtered_df["walk time"] = filtered_df["address"].apply(
     lambda addr: get_walking_time(addr, destination)
 )
 
-# --- Display Columns ---
+# --- Display ---
 cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "address", "walk time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to **{school}**:")
 st.data_editor(display_df, use_container_width=True, hide_index=True, disabled=True)
+
+# --- Description of Data Below Table ---
+st.markdown("""
+---
+**📝 Notes on the Data**
+
+- **Beds = 0**: This means the unit is a **studio apartment**.
+- **Beds = 0.5**: This is a **shared bedroom**, typically for **2 occupants**.
+- **$/sqft**: Shows how much you're paying per square foot of space.
+- **Walk Time**: Estimated walking time from the apartment to your selected UMD school.
+
+Data is pulled directly from apartment websites near campus and refreshed regularly.
+""")
 
 # --- Optional CSV Download ---
 st.download_button(
