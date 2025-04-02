@@ -18,7 +18,7 @@ TerpNest is a free tool built by students, for students.
 - Lets you filter by **price, bedrooms, bathrooms, and square footage**
 - Shows you the **best deals instantly**
 
-💡 **No more checking 10 websites**. No more guessing how far you'll be walking in the rain.
+**No more checking 10 websites**. No more guessing how far you'll be walking in the rain.
 
 ---
 
@@ -85,4 +85,45 @@ display_df["Walk Time"] = display_df.apply(
 # Final display
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to {school}:")
 cols = ["Name", "Price", "Beds", "Baths", "Sqft", "Walk Time"]
-st.markdown(display_df[cols].to_markdown(index=False), unsafe_allow_html=True)
+import streamlit.components.v1 as components
+
+html_table = "<table><thead><tr>"
+for col in cols:
+    html_table += f"<th>{col}</th>"
+html_table += "</tr></thead><tbody>"
+
+for _, row in display_df[cols].iterrows():
+    html_table += "<tr>"
+    for col in cols:
+        value = row[col]
+        if isinstance(value, str) and value.startswith("["):
+            # It's a markdown link like [Name](URL), convert to HTML
+            label = value.split("](")[0][1:]
+            url = value.split("](")[1][:-1]
+            value = f'<a href="{url}" target="_blank">{label}</a>'
+        html_table += f"<td>{value}</td>"
+    html_table += "</tr>"
+
+html_table += "</tbody></table>"
+
+st.write("### 📊 Sortable Apartment Table")
+components.html(f"""
+<div style="overflow-x: auto">
+    <style>
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+        }}
+        th, td {{
+            border: 1px solid #444;
+            padding: 0.5rem;
+            text-align: left;
+        }}
+        th {{
+            background-color: #111;
+            color: #fff;
+        }}
+    </style>
+    {html_table}
+</div>
+""", height=600, scrolling=True)
