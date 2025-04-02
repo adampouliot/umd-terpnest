@@ -5,7 +5,10 @@ from distance import get_walking_time
 
 st.set_page_config(
     page_title="TerpNest | UMD Apartment Finder",
+    page_icon="favicon.png",  # relative path to your icon
     layout="wide"
+)
+
 )
 
 st.title("Welcome to TerpNest")
