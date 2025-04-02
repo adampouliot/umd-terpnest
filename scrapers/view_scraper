@@ -1,0 +1,32 @@
+import os
+import openai
+import instructor
+import pandas as pd
+from firecrawl import FirecrawlApp
+from pydantic import BaseModel, Field
+from typing import Optional, List
+
+client = instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY")))
+app = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
+
+class Apartment(BaseModel):
+    name: str = Field(..., description="Name of the apartment layout (e.g., 4x2, Studio)")
+    beds: int = Field(..., description="Number of bedrooms")
+    baths: int = Field(..., description="Number of bathrooms")
+    price: Optional[int] = Field(None, description="Price per person in USD")
+    address: str = Field(default="8400 Baltimore Ave, College Park, MD 20740")
+
+def scrape_and_extract_view():
+    url = "https://live-theview.com/rates-floorplans/"
+    firecrawl_data = app.scrape_url(url)
+    markdown = firecrawl_data.get("markdown", "")
+    if not markdown:
+        raise ValueError("❌ Firecrawl failed to retrieve markdown content.")
+    
+    apartments: List[Apartment] = client.chat.completions.create(
+        model="gpt-3.5-turbo",  # or gpt-4-turbo if available
+        response_model=List[Apartment],
+        messages=[{"role": "user", "content": markdown}]
+    )
+
+    return pd.DataFrame([a.dict() for a in apartments])
