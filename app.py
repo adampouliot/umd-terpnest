@@ -108,6 +108,7 @@ st.markdown("""
 ---
 ### Notes on the Data
 
+- Prices reflected **may not** include monthly utilities charges and additional fees
 - **Beds = 0** → Studio apartment (no separate bedroom)
 - **Beds = 0.5** → Shared bedroom (typically 2 people sharing a room)
 - **$/sqft** → Rent cost per square foot
