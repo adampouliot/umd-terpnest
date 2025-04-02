@@ -1,12 +1,11 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 from umd_schools import UMD_SCHOOLS
 from distance import get_walking_time
 
 st.set_page_config(
     page_title="TerpNest | UMD Apartment Finder",
-    page_icon="favicon.png",
+    page_icon="favicon.png",  # relative path to your icon
     layout="wide"
 )
 
@@ -70,12 +69,13 @@ price_limit = st.sidebar.slider(
     help="Show apartments under this monthly rent."
 )
 
-# Filter data
+
 filtered_df = df[
     (df["Price"] <= price_limit) &
     (df["Beds"] >= min_beds) &
     (df["Baths"] >= min_baths)
 ]
+
 
 # Add walk time column
 destination = UMD_SCHOOLS[school]
@@ -83,18 +83,10 @@ filtered_df["Walk Time"] = filtered_df["Address"].apply(
     lambda addr: get_walking_time(addr, destination)
 )
 
-# Define columns to show and reset index
+# Define columns to show
 cols = ["Name", "Price", "Beds", "Baths", "Sqft", "Walk Time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
-# Style the DataFrame
-styled_df = display_df.style.background_gradient(
-    subset=["Price"], cmap="RdYlGn_r"
-).format({
-    "Price": "${:,.0f}",
-    "Walk Time": "{}"
-})
-
-# Show styled, sortable table
+# Final table
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to **{school}**:")
-st.dataframe(styled_df, use_container_width=True, hide_index=True)
+st.data_editor(display_df, use_container_width=True, hide_index=True, disabled=True)
