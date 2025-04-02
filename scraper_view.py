@@ -1,5 +1,6 @@
 # scraper_view.py
 import pandas as pd
+import re
 from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 
@@ -12,12 +13,11 @@ def scrape_university_view():
         browser.close()
 
     soup = BeautifulSoup(html, "html.parser")
-
-    # Grab all floorplan cards
     all_cards = soup.find_all("div", class_="floorplan margin-pad big-bottom")
     print("Found floorplan sections:", len(all_cards))
 
     data = []
+
     for card in all_cards:
         try:
             container = card.find_parent("div", class_="floorplan") or card
@@ -27,22 +27,28 @@ def scrape_university_view():
             if not title_el or not price_el:
                 continue
 
-            title = title_el.get_text(strip=True).replace("*", "")
-            price = int(price_el.get_text(strip=True).replace("$", "").replace(",", ""))
+            raw_title = title_el.get_text(strip=True).replace("*", "")
+            raw_price = price_el.get_text(strip=True).replace("*", "")
 
-            # Default parsing fallback
+            # Extract latest price (e.g., "$1,269 $1,199" => 1199)
+            price_match = re.findall(r"\$([\d,]+)", raw_price)
+            if not price_match:
+                continue
+            price = int(price_match[-1].replace(",", ""))
+
+            # Extract bed/bath from the title
             beds, baths = 0, 1
-            if "studio" not in title.lower():
-                # e.g. "4 Bedroom 4 Bath"
-                parts = title.lower().split("bedroom")
-                if len(parts) >= 2:
-                    beds = int(parts[0].strip())
-                    baths = int(parts[1].split("bath")[0].strip())
+            bed_match = re.search(r"(\d+)\s*bed", raw_title, re.IGNORECASE)
+            bath_match = re.search(r"(\d+)\s*bath", raw_title, re.IGNORECASE)
+            if bed_match:
+                beds = int(bed_match.group(1))
+            if bath_match:
+                baths = int(bath_match.group(1))
 
-            name_cleaned = "University View - " + title.replace("Download Floorplan PDF", "").strip()
+            name = "University View - " + raw_title.split("$")[0].strip()
 
             data.append({
-                "Name": name_cleaned,
+                "Name": name,
                 "Price": price,
                 "Beds": beds,
                 "Baths": baths,
@@ -51,7 +57,7 @@ def scrape_university_view():
             })
 
         except Exception as e:
-            print("Skipping due to error:", e)
+            print("Skipping a listing due to error:", e)
             continue
 
     df = pd.DataFrame(data).drop_duplicates()
