@@ -50,6 +50,38 @@ filtered_df["Walk Time"] = filtered_df["Address"].apply(
     lambda addr: get_walking_time(addr, destination)
 )
 
+# Add Google Maps links for walking directions
+filtered_df["Walk Link"] = filtered_df["Address"].apply(
+    lambda addr: f"https://www.google.com/maps/dir/?api=1&destination={addr.replace(' ', '+')}&travelmode=walking"
+)
+
+# Add hardcoded apartment website links (based on name matching)
+apartment_links = {
+    "University View": "https://live-theview.com",
+    "Landmark": "https://landmarkcollegepark.com",
+    "The Varsity": "https://www.varsitycollegepark.com",
+    "Terrapin Row": "https://www.terrapinrow.com",
+    "Union on Knox": "https://www.uniononknox.com",
+    "The Standard": "https://www.thestandardcollegepark.com",
+}
+
+def find_link(name):
+    for keyword, url in apartment_links.items():
+        if keyword.lower() in name.lower():
+            return url
+    return ""
+
+filtered_df["Website"] = filtered_df["Name"].apply(find_link)
+
+# Make name and walk time clickable
+filtered_df["Name"] = filtered_df.apply(
+    lambda row: f"[{row['Name']}]({row['Website']})", axis=1
+)
+filtered_df["Walk Time"] = filtered_df.apply(
+    lambda row: f"[{row['Walk Time']}]({row['Walk Link']})", axis=1
+)
+
+
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to {school}:")
 cols = ["Name", "Price", "Beds", "Baths", "Sqft", "Walk Time"]
 st.dataframe(filtered_df[cols].reset_index(drop=True), use_container_width=True)
