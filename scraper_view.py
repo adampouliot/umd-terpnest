@@ -12,38 +12,39 @@ def scrape_university_view():
         browser.close()
 
     soup = BeautifulSoup(html, "html.parser")
+    floorplans = soup.select("div.floorplan.margin-pad.big-bottom")
 
-    # Get each floorplan section
-    sections = soup.find_all("div", class_="floorplan margin-pad big-bottom")
-    print("Found floorplan sections:", len(sections))
+    print("Found floorplan sections:", len(floorplans))
 
     data = []
+    seen_names = set()
 
-    for section in sections:
+    for section in floorplans:
         try:
-            title_tag = section.find("h2")
-            price_tag = section.find("span", class_="special-rates")
+            title_el = section.find("h4", class_="rate")
+            price_el = section.find("span", class_="special-rates")
 
-            if not title_tag or not price_tag:
+            if not title_el or not price_el:
                 continue
 
-            title = title_tag.get_text(strip=True)
+            name = title_el.get_text(strip=True)
+            if name in seen_names:
+                continue  # skip duplicates
+            seen_names.add(name)
 
-            # Infer bed/bath count
-            if "Studio" in title:
+            price = int(price_el.get_text(strip=True).replace("$", "").replace(",", "").split("*")[-1])
+
+            # Extract bed/bath count heuristically from name
+            name_lower = name.lower()
+            if "studio" in name_lower:
                 beds = 0
                 baths = 1
             else:
-                try:
-                    beds = int(title.split(" Bedroom")[0].strip())
-                    baths = int(title.split(" Bedroom")[1].split(" Bath")[0].strip())
-                except:
-                    beds, baths = None, None  # fallback if parsing fails
-
-            price = int(price_tag.get_text(strip=True).replace("$", "").replace(",", ""))
+                beds = next((int(x) for x in name_lower.split() if x.isdigit()), None)
+                baths = beds if beds else 1
 
             data.append({
-                "Name": f"University View - {title}",
+                "Name": f"University View - {name}",
                 "Price": price,
                 "Beds": beds,
                 "Baths": baths,
@@ -52,16 +53,14 @@ def scrape_university_view():
             })
 
         except Exception as e:
-            print("Skipping section due to error:", e)
+            print("Skipping a listing due to error:", e)
             continue
 
     df = pd.DataFrame(data)
-    df.drop_duplicates(subset=["Name", "Price"], inplace=True)
     print(f"✅ Scraped {len(df)} unique floorplans")
     df.to_csv("apartments.csv", index=False)
     return df
 
-# Local debug
 if __name__ == "__main__":
     df = scrape_university_view()
     print(df)
