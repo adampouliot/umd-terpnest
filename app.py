@@ -104,6 +104,13 @@ def style_walk_time(val):
         return "color: orange"
     else:
         return "color: red"
+    
+clean_df = display_df.copy()
+clean_df["beds"] = clean_df["beds"].astype(int)
+clean_df["baths"] = clean_df["baths"].astype(int)
+clean_df["price"] = clean_df["price"].round(0).astype(int)
+clean_df["sqft"] = clean_df["sqft"].round(0).astype(int)
+clean_df["$/sqft"] = clean_df["$/sqft"].round(2)
 
 styled_df = display_df.style.applymap(style_walk_time, subset=["walk time"])
 
