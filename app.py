@@ -80,6 +80,14 @@ display_df = filtered_df[cols].reset_index(drop=True)
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to **{school}**:")
 st.data_editor(display_df, use_container_width=True, hide_index=True, disabled=True)
 
+# --- Optional CSV Download ---
+st.download_button(
+    label="Download CSV",
+    data=display_df.to_csv(index=False),
+    file_name="filtered_apartments.csv",
+    mime="text/csv"
+)
+
 # --- Description of Data Below Table ---
 st.markdown("""
 ---
@@ -109,11 +117,3 @@ st.markdown("""
 - [Hub College Park](https://huboncampus.com/college-park/)
 """)
 
-
-# --- Optional CSV Download ---
-st.download_button(
-    label="Download CSV",
-    data=display_df.to_csv(index=False),
-    file_name="filtered_apartments.csv",
-    mime="text/csv"
-)
