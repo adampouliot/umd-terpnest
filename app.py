@@ -1,4 +1,10 @@
 import streamlit as st
+st.set_page_config(
+    page_title="TerpNest | UMD Apartment Finder",
+    page_icon="favicon.png",
+    layout="wide"
+)
+
 import pandas as pd
 from umd_schools import UMD_SCHOOLS
 from scraper_view import scrape_university_view
@@ -6,19 +12,18 @@ from distance import get_walking_time
 
 @st.cache_data(ttl=3600)
 def get_apartment_data():
-    return scrape_university_view()
+    try:
+        df = scrape_university_view()
+        st.write("✅ Scraper ran successfully. Sample data:")
+        st.write(df.head())  # TEMP: Debug preview
+        return df
+    except Exception as e:
+        st.error("🚨 Scraper failed to load data.")
+        st.exception(e)
+        return pd.DataFrame()
+
+# --- Load apartment data ---
 df = get_apartment_data()
-
-# TEMPORARY DEBUG
-st.write("Raw data from scraper:")
-st.write(df.head())
-
-
-st.set_page_config(
-    page_title="TerpNest | UMD Apartment Finder",
-    page_icon="favicon.png",
-    layout="wide"
-)
 
 # --- Header ---
 st.markdown("# TerpNest\n### The Smarter Way to Find UMD Housing")
@@ -44,13 +49,7 @@ TerpNest is a free tool built by students, for students.
 st.markdown("---")
 st.title("Explore Available Apartments")
 
-# --- Load live apartment data ---
-df = get_apartment_data()
-
-# Debug helper (optional during development)
-# st.write("Loaded columns:", df.columns.tolist())
-
-# --- Fallback: If scraper failed or returned nothing ---
+# --- Fallback if scraper returned nothing ---
 if df.empty or "Price" not in df.columns:
     st.error("No apartment listings were found at this time. Please try again later.")
     st.stop()
@@ -78,7 +77,7 @@ filtered_df = df[
     (df["Baths"] >= min_baths)
 ]
 
-# --- Walk time ---
+# --- Add walk time column ---
 destination = UMD_SCHOOLS[school]
 filtered_df["Walk Time"] = filtered_df["Address"].apply(
     lambda addr: get_walking_time(addr, destination)
