@@ -38,7 +38,6 @@ TerpNest is a free tool built by students, for students.
 
 **No more checking 10+ websites**. No more guessing how far you'll be walking in the rain.
 
-
 **Get started below and find your next place to live. It's totally free.**
 """)
 
@@ -54,16 +53,33 @@ if df.empty or "price" not in df.columns:
 
 # --- Sidebar Filters ---
 st.sidebar.header("Filter Your Search")
+
+# School
 school = st.sidebar.selectbox("Your UMD School (for walk time)", list(UMD_SCHOOLS.keys()))
-min_beds = st.sidebar.selectbox("Minimum Bedrooms", sorted(df["beds"].unique()))
-min_baths = st.sidebar.selectbox("Minimum Bathrooms", sorted(df["baths"].unique()))
+
+# Bedrooms
+bedroom_options = sorted(df["beds"].dropna().unique())
+selected_beds = st.sidebar.multiselect("Select Bedrooms", bedroom_options, default=bedroom_options)
+
+# Bathrooms
+bathroom_options = sorted(df["baths"].dropna().unique())
+selected_baths = st.sidebar.multiselect("Select Bathrooms", bathroom_options, default=bathroom_options)
+
+# Price
 price_limit = st.sidebar.slider("Max Price ($ per person)", 800, 3000, 1600)
+
+# Square Footage
+min_sqft = int(df["sqft"].min())
+max_sqft = int(df["sqft"].max())
+sqft_range = st.sidebar.slider("Square Footage Range", min_sqft, max_sqft, (min_sqft, max_sqft))
 
 # --- Apply Filters ---
 filtered_df = df[
     (df["price"] <= price_limit) &
-    (df["beds"] >= min_beds) &
-    (df["baths"] >= min_baths)
+    (df["beds"].isin(selected_beds)) &
+    (df["baths"].isin(selected_baths)) &
+    (df["sqft"] >= sqft_range[0]) &
+    (df["sqft"] <= sqft_range[1])
 ].copy()
 
 # --- Walk Time Calculation ---
@@ -72,7 +88,7 @@ filtered_df["walk time"] = filtered_df["address"].apply(
     lambda addr: get_walking_time(addr, destination)
 )
 
-# --- Display ---
+# --- Display Table ---
 cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "address", "walk time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
@@ -87,23 +103,23 @@ st.download_button(
     mime="text/csv"
 )
 
-# --- Description of Data Below Table ---
+# --- Description of Data ---
 st.markdown("""
 ---
-**Notes on the Data**
+### 📝 Notes on the Data
 
-- **Beds = 0**: This means the unit is a **studio apartment**.
-- **Beds = 0.5**: This is a **shared bedroom**, typically for **2 occupants**.
-- **$/sqft**: Shows how much you're paying per square foot of space.
-- **Walk Time**: Estimated walking time from the apartment to your selected UMD school.
+- **Beds = 0** → Studio apartment (no separate bedroom)
+- **Beds = 0.5** → Shared bedroom (typically 2 people sharing a room)
+- **$/sqft** → Rent cost per square foot
+- **Walk Time** → Estimated walk from apartment to your selected UMD school
 
-Data is pulled directly from apartment websites near campus and refreshed regularly.
+This data is pulled directly from apartment websites near UMD and refreshed regularly.
 """)
 
 # --- Apartment Website Links ---
 st.markdown("""
 ---
-**Apartment Websites**
+### 🔗 Apartment Websites
 
 - [University View](https://live-theview.com)  
 - [The Varsity](https://www.varsitycollegepark.com)  
@@ -115,4 +131,3 @@ st.markdown("""
 - [Landmark](https://www.landmarkcollegepark.com)  
 - [Hub College Park](https://huboncampus.com/college-park/)
 """)
-
