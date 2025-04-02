@@ -83,7 +83,7 @@ st.data_editor(display_df, use_container_width=True, hide_index=True, disabled=T
 # --- Description of Data Below Table ---
 st.markdown("""
 ---
-**📝 Notes on the Data**
+**Notes on the Data**
 
 - **Beds = 0**: This means the unit is a **studio apartment**.
 - **Beds = 0.5**: This is a **shared bedroom**, typically for **2 occupants**.
@@ -92,6 +92,23 @@ st.markdown("""
 
 Data is pulled directly from apartment websites near campus and refreshed regularly.
 """)
+
+# --- Apartment Website Links ---
+st.markdown("""
+---
+**Apartment Websites**
+
+- [University View](https://live-theview.com)  
+- [The Varsity](https://www.varsitycollegepark.com)  
+- [Tempo](https://tempoapartments.com)  
+- [Terrapin Row](https://www.terrapinrow.com)  
+- [Union on Knox](https://www.uniononknox.com)  
+- [The Standard](https://www.standardcollegepark.com)  
+- [Aspen Heights](https://www.myaspenheights.com/college-park-md/apartments/)  
+- [Landmark](https://www.landmarkcollegepark.com)  
+- [Hub College Park](https://huboncampus.com/collegepark)
+""")
+
 
 # --- Optional CSV Download ---
 st.download_button(
