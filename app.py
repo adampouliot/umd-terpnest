@@ -81,7 +81,7 @@ filtered_df = df[
     (df["sqft"] >= sqft_range[0]) &
     (df["sqft"] <= sqft_range[1])
 ].copy()
-st.progress(len(filtered_df) / len(df))
+
 
 # --- Walk Time Calculation ---
 destination = UMD_SCHOOLS[school]
