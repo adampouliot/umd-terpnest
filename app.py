@@ -106,7 +106,7 @@ st.download_button(
 # --- Description of Data ---
 st.markdown("""
 ---
-### 📝 Notes on the Data
+### Notes on the Data
 
 - **Beds = 0** → Studio apartment (no separate bedroom)
 - **Beds = 0.5** → Shared bedroom (typically 2 people sharing a room)
@@ -119,7 +119,7 @@ This data is pulled directly from apartment websites near UMD and refreshed regu
 # --- Apartment Website Links ---
 st.markdown("""
 ---
-### 🔗 Apartment Websites
+### Apartment Websites
 
 - [University View](https://live-theview.com)  
 - [The Varsity](https://www.varsitycollegepark.com)  
