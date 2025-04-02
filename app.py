@@ -24,5 +24,5 @@ filtered_df["Walk Time"] = filtered_df["Address"].apply(
 )
 
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to {school}:")
-cols = ["Name", "Price", "Beds", "Baths", "Sqft", "Address", "Walk Time"]
+cols = ["Name", "Price", "Beds", "Baths", "Sqft", "Walk Time"]
 st.dataframe(filtered_df[cols], use_container_width=True)
