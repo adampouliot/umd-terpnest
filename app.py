@@ -3,6 +3,15 @@ import pandas as pd
 from umd_schools import UMD_SCHOOLS
 from distance import get_walking_time
 
+import numpy as np
+
+styled_df = display_df.style.background_gradient(
+    subset=["Price"], cmap="RdYlGn_r"
+).format({"Price": "${:,.0f}", "Walk Time": "{} mins"})
+
+st.dataframe(styled_df, use_container_width=True, hide_index=True)
+
+
 st.set_page_config(
     page_title="TerpNest | UMD Apartment Finder",
     page_icon="favicon.png",  # relative path to your icon
