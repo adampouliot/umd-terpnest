@@ -9,8 +9,6 @@ st.set_page_config(
     layout="wide"
 )
 
-)
-
 st.title("Welcome to TerpNest")
 st.subheader("Find the Perfect Apartment Near UMD — All in One Place")
 
