@@ -36,17 +36,17 @@ st.title("Explore Available Apartments")
 df = pd.read_csv("apartments.csv")
 
 # Sidebar filters
-st.sidebar.header("🎛️ Filter Your Search")
+st.sidebar.header("Filter Your Search")
 
 # ---- Location ----
 school = st.sidebar.selectbox(
-    "🎓 Your UMD School (for walk time)",
+    "Your UMD School (for walk time)",
     list(UMD_SCHOOLS.keys()),
     help="We'll estimate walking distance from each apartment to this location."
 )
 
 # ---- Apartment Features ----
-st.sidebar.subheader("🛏️ Apartment Preferences")
+st.sidebar.subheader("Apartment Preferences")
 
 min_beds = st.sidebar.selectbox(
     "Minimum Bedrooms",
@@ -61,7 +61,7 @@ min_baths = st.sidebar.selectbox(
 )
 
 # ---- Price Range ----
-st.sidebar.subheader("💸 Price Limit")
+st.sidebar.subheader("Price Limit")
 
 price_limit = st.sidebar.slider(
     "Max Price ($ per person)",
