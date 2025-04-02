@@ -36,13 +36,46 @@ st.title("Explore Available Apartments")
 df = pd.read_csv("apartments.csv")
 
 # Sidebar filters
-st.sidebar.header("Filter Your Search")
-price_limit = st.sidebar.slider("Max Price ($)", 800, 2000, 1500)
-min_beds = st.sidebar.selectbox("Minimum Bedrooms", [1, 2, 3, 4])
-school = st.sidebar.selectbox("Your UMD School", list(UMD_SCHOOLS.keys()))
+st.sidebar.header("🎛️ Filter Your Search")
 
-# Filter
-filtered_df = df[(df["Price"] <= price_limit) & (df["Beds"] >= min_beds)]
+# ---- Location ----
+school = st.sidebar.selectbox(
+    "🎓 Your UMD School (for walk time)",
+    list(UMD_SCHOOLS.keys()),
+    help="We'll estimate walking distance from each apartment to this location."
+)
+
+# ---- Apartment Features ----
+st.sidebar.subheader("🛏️ Apartment Preferences")
+
+min_beds = st.sidebar.selectbox(
+    "Minimum Bedrooms",
+    [1, 2, 3, 4],
+    help="Only show listings with at least this many bedrooms."
+)
+
+min_baths = st.sidebar.selectbox(
+    "Minimum Bathrooms",
+    [1, 2, 3, 4],
+    help="Only show listings with at least this many bathrooms."
+)
+
+# ---- Price Range ----
+st.sidebar.subheader("💸 Price Limit")
+
+price_limit = st.sidebar.slider(
+    "Max Price ($ per person)",
+    800, 2000, 1500,
+    help="Show apartments under this monthly rent."
+)
+
+
+filtered_df = df[
+    (df["Price"] <= price_limit) &
+    (df["Beds"] >= min_beds) &
+    (df["Baths"] >= min_baths)
+]
+
 
 # Add walk time column
 destination = UMD_SCHOOLS[school]
