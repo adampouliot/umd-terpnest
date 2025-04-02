@@ -82,19 +82,33 @@ filtered_df = df[
     (df["sqft"] <= sqft_range[1])
 ].copy()
 
-
 # --- Walk Time Calculation ---
 destination = UMD_SCHOOLS[school]
 filtered_df["walk time"] = filtered_df["address"].apply(
     lambda addr: get_walking_time(addr, destination)
 )
 
-# --- Display Table ---
+# --- Display Table with Color Styling ---
 cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "address", "walk time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
+def style_walk_time(val):
+    try:
+        minutes = int(str(val).split()[0])
+    except:
+        return "color: black"
+
+    if minutes < 10:
+        return "color: green"
+    elif minutes <= 20:
+        return "color: orange"
+    else:
+        return "color: red"
+
+styled_df = display_df.style.applymap(style_walk_time, subset=["walk time"])
+
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to **{school}**:")
-st.data_editor(display_df, use_container_width=True, hide_index=True, disabled=True)
+st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
 # --- Optional CSV Download ---
 st.download_button(
