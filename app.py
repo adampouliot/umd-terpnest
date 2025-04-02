@@ -4,7 +4,7 @@ from umd_schools import UMD_SCHOOLS
 from scraper_view import scrape_university_view
 from distance import get_walking_time
 
-@st.cache_data(ttl=3600)  # Cache scraper for 1 hour
+@st.cache_data(ttl=3600)
 def get_apartment_data():
     return scrape_university_view()
 
@@ -41,39 +41,29 @@ st.title("Explore Available Apartments")
 # --- Load live apartment data ---
 df = get_apartment_data()
 
+# Debug helper (optional during development)
+# st.write("Loaded columns:", df.columns.tolist())
+
+# --- Fallback: If scraper failed or returned nothing ---
+if df.empty or "Price" not in df.columns:
+    st.error("No apartment listings were found at this time. Please try again later.")
+    st.stop()
+
 # --- Sidebar filters ---
 st.sidebar.header("Filter Your Search")
 
-# ---- Location ----
 school = st.sidebar.selectbox(
     "Your UMD School (for walk time)",
     list(UMD_SCHOOLS.keys()),
     help="We'll estimate walking distance from each apartment to this location."
 )
 
-# ---- Apartment Preferences ----
 st.sidebar.subheader("Apartment Preferences")
+min_beds = st.sidebar.selectbox("Minimum Bedrooms", [1, 2, 3, 4])
+min_baths = st.sidebar.selectbox("Minimum Bathrooms", [1, 2, 3, 4])
 
-min_beds = st.sidebar.selectbox(
-    "Minimum Bedrooms",
-    [1, 2, 3, 4],
-    help="Only show listings with at least this many bedrooms."
-)
-
-min_baths = st.sidebar.selectbox(
-    "Minimum Bathrooms",
-    [1, 2, 3, 4],
-    help="Only show listings with at least this many bathrooms."
-)
-
-# ---- Price Range ----
 st.sidebar.subheader("Price Limit")
-
-price_limit = st.sidebar.slider(
-    "Max Price ($ per person)",
-    800, 2000, 1500,
-    help="Show apartments under this monthly rent."
-)
+price_limit = st.sidebar.slider("Max Price ($ per person)", 800, 2000, 1500)
 
 # --- Apply filters ---
 filtered_df = df[
@@ -82,13 +72,13 @@ filtered_df = df[
     (df["Baths"] >= min_baths)
 ]
 
-# --- Add walk time column ---
+# --- Walk time ---
 destination = UMD_SCHOOLS[school]
 filtered_df["Walk Time"] = filtered_df["Address"].apply(
     lambda addr: get_walking_time(addr, destination)
 )
 
-# --- Display filtered results ---
+# --- Display results ---
 cols = ["Name", "Price", "Beds", "Baths", "Sqft", "Walk Time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
