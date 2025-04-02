@@ -100,13 +100,13 @@ st.markdown("""
 
 - [University View](https://live-theview.com)  
 - [The Varsity](https://www.varsitycollegepark.com)  
-- [Tempo](https://tempoapartments.com)  
+- [Tempo](https://tempocollegepark.com/)  
 - [Terrapin Row](https://www.terrapinrow.com)  
 - [Union on Knox](https://www.uniononknox.com)  
-- [The Standard](https://www.standardcollegepark.com)  
-- [Aspen Heights](https://www.myaspenheights.com/college-park-md/apartments/)  
+- [The Standard](https://www.thestandardcollegepark.com/)  
+- [Aspen Heights](https://www.aspencollegepark.com/)  
 - [Landmark](https://www.landmarkcollegepark.com)  
-- [Hub College Park](https://huboncampus.com/collegepark)
+- [Hub College Park](https://huboncampus.com/college-park/)
 """)
 
 
