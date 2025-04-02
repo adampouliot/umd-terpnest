@@ -40,6 +40,8 @@ st.title("Explore Available Apartments")
 
 # Load data from live scraper
 df = get_apartment_data()
+st.write("Scraped columns:", df.columns.tolist())
+st.dataframe(df)
 
 # Sidebar filters
 st.sidebar.header("Filter Your Search")
