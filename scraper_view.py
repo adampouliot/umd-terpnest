@@ -13,39 +13,44 @@ def scrape_university_view():
         browser.close()
 
     soup = BeautifulSoup(html, "html.parser")
-    all_cards = soup.find_all("div", class_="floorplan margin-pad big-bottom")
-    print("Found floorplan sections:", len(all_cards))
+    sections = soup.find_all("div", class_="floorplan margin-pad big-bottom")
+    print("Found floorplan sections:", len(sections))
 
     data = []
 
-    for card in all_cards:
+    for section in sections:
         try:
-            container = card.find_parent("div", class_="floorplan") or card
-            title_el = container.find("h4", class_="rate")
-            price_el = container.find("span", class_="special-rates")
-
-            if not title_el or not price_el:
+            # Extract title (e.g., "4 Bedroom2 Bath", "Studio")
+            raw_title = section.find("h2") or section.find("h4")
+            if not raw_title:
                 continue
 
-            raw_title = title_el.get_text(strip=True).replace("*", "")
-            raw_price = price_el.get_text(strip=True).replace("*", "")
+            title_text = raw_title.get_text(strip=True).replace("*", "")
+            print("Raw title:", title_text)
 
-            # Extract latest price (e.g., "$1,269 $1,199" => 1199)
-            price_match = re.findall(r"\$([\d,]+)", raw_price)
-            if not price_match:
+            # Normalize for matching (remove all spaces)
+            normalized_title = title_text.replace(" ", "")
+
+            layout_match = re.search(r"(\d+)Bedroom(\d+)Bath", normalized_title, re.IGNORECASE)
+            if layout_match:
+                beds = int(layout_match.group(1))
+                baths = int(layout_match.group(2))
+                layout = f"{beds}x{baths}"
+                name = f"University View - {layout} ({title_text})"
+            elif "studio" in title_text.lower():
+                beds = 0
+                baths = 1
+                layout = "Studio"
+                name = "University View - Studio (Studio)"
+            else:
+                print("Could not parse bed/bath:", title_text)
                 continue
-            price = int(price_match[-1].replace(",", ""))
 
-            # Extract bed/bath from the title
-            beds, baths = 0, 1
-            bed_match = re.search(r"(\d+)\s*bed", raw_title, re.IGNORECASE)
-            bath_match = re.search(r"(\d+)\s*bath", raw_title, re.IGNORECASE)
-            if bed_match:
-                beds = int(bed_match.group(1))
-            if bath_match:
-                baths = int(bath_match.group(1))
-
-            name = "University View - " + raw_title.split("$")[0].strip()
+            # Get price
+            price_el = section.find("span", class_="special-rates")
+            if not price_el:
+                continue
+            price = int(price_el.get_text(strip=True).replace("$", "").replace(",", ""))
 
             data.append({
                 "Name": name,
@@ -57,11 +62,11 @@ def scrape_university_view():
             })
 
         except Exception as e:
-            print("Skipping a listing due to error:", e)
+            print("Skipping listing due to error:", e)
             continue
 
-    df = pd.DataFrame(data).drop_duplicates()
-    print(f"✅ Scraped {len(df)} unique floorplans")
+    df = pd.DataFrame(data)
+    print(f"✅ Scraped {len(df)} floorplans (including variations)")
     print(df[["Name", "Price", "Beds", "Baths"]])
 
     df.to_csv("apartments.csv", index=False)
