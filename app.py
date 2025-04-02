@@ -22,7 +22,7 @@ TerpNest is a free tool built by students, for students.
 - Lets you filter by **price, bedrooms, bathrooms, and square footage**
 - Shows you the **best deals instantly**
 
-💡 **No more checking 10 websites**. No more guessing how far you'll be walking in the rain.
+**No more checking 10+ websites**. No more guessing how far you'll be walking in the rain.
 
 ---
 
@@ -50,11 +50,10 @@ filtered_df["Walk Time"] = filtered_df["Address"].apply(
     lambda addr: get_walking_time(addr, destination)
 )
 
-# Final table
-st.write(f"Apartments filtered by price, bedrooms, and walking distance to {school}:")
-
-# ✅ Ensure these columns all exist in your CSV!
+# Define columns to show
 cols = ["Name", "Price", "Beds", "Baths", "Sqft", "Walk Time"]
+display_df = filtered_df[cols].reset_index(drop=True)
 
-# Show sortable, full-width table
-st.dataframe(filtered_df[cols].reset_index(drop=True), use_container_width=True)
+# Final table
+st.write(f"Apartments filtered by price, bedrooms, and walking distance to **{school}**:")
+st.dataframe(display_df, use_container_width=True)
