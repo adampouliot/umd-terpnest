@@ -51,7 +51,7 @@ filtered_df["Walk Time"] = filtered_df["Address"].apply(
 )
 
 # Define columns to show
-cols = ["Apartment", "Price", "Beds", "Baths", "Sqft", "Walk Time"]
+cols = ["Name", "Price", "Beds", "Baths", "Sqft", "Walk Time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
 # Final table
