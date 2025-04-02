@@ -3,18 +3,18 @@ import pandas as pd
 from umd_schools import UMD_SCHOOLS
 from scraper_view import scrape_university_view
 from distance import get_walking_time
-from scraper_view import scrape_university_view
 
-@st.cache_data(ttl=3600)  # Cache result for 1 hour
+@st.cache_data(ttl=3600)  # Cache scraper for 1 hour
 def get_apartment_data():
     return scrape_university_view()
 
 st.set_page_config(
     page_title="TerpNest | UMD Apartment Finder",
-    page_icon="favicon.png",  # relative path to your icon
+    page_icon="favicon.png",
     layout="wide"
 )
 
+# --- Header ---
 st.markdown("# TerpNest\n### The Smarter Way to Find UMD Housing")
 
 st.markdown("""
@@ -38,12 +38,10 @@ TerpNest is a free tool built by students, for students.
 st.markdown("---")
 st.title("Explore Available Apartments")
 
-# Load data from live scraper
+# --- Load live apartment data ---
 df = get_apartment_data()
-st.write("Scraped columns:", df.columns.tolist())
-st.dataframe(df)
 
-# Sidebar filters
+# --- Sidebar filters ---
 st.sidebar.header("Filter Your Search")
 
 # ---- Location ----
@@ -53,7 +51,7 @@ school = st.sidebar.selectbox(
     help="We'll estimate walking distance from each apartment to this location."
 )
 
-# ---- Apartment Features ----
+# ---- Apartment Preferences ----
 st.sidebar.subheader("Apartment Preferences")
 
 min_beds = st.sidebar.selectbox(
@@ -77,24 +75,22 @@ price_limit = st.sidebar.slider(
     help="Show apartments under this monthly rent."
 )
 
-
+# --- Apply filters ---
 filtered_df = df[
     (df["Price"] <= price_limit) &
     (df["Beds"] >= min_beds) &
     (df["Baths"] >= min_baths)
 ]
 
-
-# Add walk time column
+# --- Add walk time column ---
 destination = UMD_SCHOOLS[school]
 filtered_df["Walk Time"] = filtered_df["Address"].apply(
     lambda addr: get_walking_time(addr, destination)
 )
 
-# Define columns to show
+# --- Display filtered results ---
 cols = ["Name", "Price", "Beds", "Baths", "Sqft", "Walk Time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
-# Final table
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to **{school}**:")
 st.data_editor(display_df, use_container_width=True, hide_index=True, disabled=True)
