@@ -20,7 +20,7 @@ TerpNest is a free tool built by students, for students.
 - Aggregates real apartment listings near UMD
 - Calculates **walking distance** to your school (Engineering, Business, Journalism, etc.)
 - Lets you filter by **price, bedrooms, bathrooms, and square footage**
-- Shows you the **best deals instantly**
+- Allows you to download results as a CSV file**
 
 **No more checking 10+ websites**. No more guessing how far you'll be walking in the rain.
 
