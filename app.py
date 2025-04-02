@@ -83,5 +83,7 @@ filtered_df["Walk Time"] = filtered_df.apply(
 
 
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to {school}:")
+# Define columns to show
 cols = ["Name", "Price", "Beds", "Baths", "Sqft", "Walk Time"]
-st.dataframe(filtered_df[cols].reset_index(drop=True), use_container_width=True)
+# Show markdown-rendered table
+st.markdown(display_df[cols].to_markdown(index=False), unsafe_allow_html=True)
