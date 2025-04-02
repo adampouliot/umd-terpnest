@@ -30,7 +30,7 @@ from umd_schools import UMD_SCHOOLS
 from distance import get_walking_time
 st.markdown("---")
 
-st.title("Explore Availible Apartments")
+st.title("Explore Available Apartments")
 
 # Load apartment data
 df = pd.read_csv("apartments.csv")
@@ -50,12 +50,12 @@ filtered_df["Walk Time"] = filtered_df["Address"].apply(
     lambda addr: get_walking_time(addr, destination)
 )
 
-# Add Google Maps links for walking directions
+# Add Google Maps walking directions links
 filtered_df["Walk Link"] = filtered_df["Address"].apply(
     lambda addr: f"https://www.google.com/maps/dir/?api=1&destination={addr.replace(' ', '+')}&travelmode=walking"
 )
 
-# Add hardcoded apartment website links (based on name matching)
+# Hardcoded apartment site links
 apartment_links = {
     "University View": "https://live-theview.com",
     "Landmark": "https://landmarkcollegepark.com",
@@ -73,17 +73,16 @@ def find_link(name):
 
 filtered_df["Website"] = filtered_df["Name"].apply(find_link)
 
-# Make name and walk time clickable
-filtered_df["Name"] = filtered_df.apply(
+# Build display version of the dataframe with markdown links
+display_df = filtered_df.copy()
+display_df["Name"] = display_df.apply(
     lambda row: f"[{row['Name']}]({row['Website']})", axis=1
 )
-filtered_df["Walk Time"] = filtered_df.apply(
+display_df["Walk Time"] = display_df.apply(
     lambda row: f"[{row['Walk Time']}]({row['Walk Link']})", axis=1
 )
 
-
+# Final display
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to {school}:")
-# Define columns to show
 cols = ["Name", "Price", "Beds", "Baths", "Sqft", "Walk Time"]
-# Show markdown-rendered table
 st.markdown(display_df[cols].to_markdown(index=False), unsafe_allow_html=True)
