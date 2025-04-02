@@ -56,4 +56,4 @@ display_df = filtered_df[cols].reset_index(drop=True)
 
 # Final table
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to **{school}**:")
-st.dataframe(display_df, use_container_width=True)
+st.data_editor(display_df, use_container_width=True, hide_index=True, disabled=True)
