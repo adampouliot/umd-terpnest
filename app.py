@@ -38,7 +38,6 @@ TerpNest is a free tool built by students, for students.
 
 **No more checking 10+ websites**. No more guessing how far you'll be walking in the rain.
 
----
 
 **Get started below and find your next place to live. It's totally free.**
 """)
