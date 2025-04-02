@@ -47,6 +47,9 @@ st.markdown("---")
 st.title("Explore Available Apartments")
 
 # --- Fallback check ---
+# Normalize column names
+df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+
 if df.empty or "price" not in df.columns:
     st.error("No apartment listings were found at this time. Please try again later.")
     st.stop()
