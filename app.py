@@ -23,7 +23,7 @@ except Exception as e:
     st.stop()
 
 # --- Header ---
-st.markdown("# TerpNest\n### The Smarter Way to Find UMD Housing")
+st.markdown("# TerpNest\n### The Smarter Way to Find UMD Apartments")
 
 st.markdown("""
 ---
