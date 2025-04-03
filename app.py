@@ -6,11 +6,30 @@ import pydeck as pdk
 from umd_schools import UMD_SCHOOLS
 from distance import get_walking_time
 
+# --- Page config ---
 st.set_page_config(
     page_title="TerpNest | UMD Apartment Finder",
     page_icon="favicon.png",
     layout="wide"
 )
+
+# --- Hide Streamlit UI elements & apply custom font ---
+st.markdown("""
+    <style>
+    /* Hide top Streamlit toolbar */
+    [data-testid="stToolbar"] {
+        visibility: hidden;
+    }
+
+    /* Hide Streamlit's default footer and menu */
+    #MainMenu, footer {visibility: hidden;}
+
+    /* Apply custom font */
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # --- Load CSV ---
 try:
