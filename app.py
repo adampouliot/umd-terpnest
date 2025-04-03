@@ -128,9 +128,6 @@ display_df["lat"] = latitudes
 display_df["lon"] = longitudes
 map_df = display_df.dropna(subset=["lat", "lon"])
 
-# --- Interactive Map ---
-st.markdown("##Apartment Map View")
-
 # --- Hardcoded apartment coordinates ---
 apartment_locations = pd.DataFrame([
     {"name": "University View", "lat": 38.987354, "lon": -76.938698},
