@@ -130,7 +130,7 @@ map_df = display_df.dropna(subset=["lat", "lon"])
 
 # --- Hardcoded apartment coordinates ---
 apartment_locations = pd.DataFrame([
-    {"name": "University View", "lat": 38.987354, "lon": -76.938698},
+    {"name": "University View", "lat": 38.99246, "lon": -76.93402},
     {"name": "The Varsity", "lat": 38.989403, "lon": -76.938431},
     {"name": "Tempo", "lat": 38.988670, "lon": -76.938172},
     {"name": "Terrapin Row", "lat": 38.982749, "lon": -76.939777},
