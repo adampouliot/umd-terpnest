@@ -1,5 +1,8 @@
 import streamlit as st
 import pandas as pd
+from geopy.geocoders import Nominatim
+from geopy.extra.rate_limiter import RateLimiter
+import pydeck as pdk
 from umd_schools import UMD_SCHOOLS
 from distance import get_walking_time
 
@@ -12,11 +15,8 @@ st.set_page_config(
 # --- Load CSV ---
 try:
     df = pd.read_csv("apartments.csv")
-
-    # Clean columns: remove $ and convert price and $/sqft to numeric
     df["price"] = df["price"].replace('[\$,]', '', regex=True).astype(float)
     df["$/sqft"] = df["$/sqft"].replace('[\$,]', '', regex=True).astype(float)
-
 except Exception as e:
     st.error("🚨 Failed to load apartment data.")
     st.exception(e)
@@ -27,7 +27,6 @@ st.markdown("# TerpNest\n### The Smarter Way to Find UMD Apartments")
 
 st.markdown("""
 ---
-
 TerpNest is a free tool built by students, for students.
 
 **What it does:**
@@ -53,22 +52,12 @@ if df.empty or "price" not in df.columns:
 
 # --- Sidebar Filters ---
 st.sidebar.header("Filter Your Search")
-
-# School
 school = st.sidebar.selectbox("Your UMD School (for walk time)", list(UMD_SCHOOLS.keys()))
-
-# Bedrooms
 bedroom_options = sorted(df["beds"].dropna().unique())
 selected_beds = st.sidebar.multiselect("Select Bedrooms", bedroom_options, default=bedroom_options)
-
-# Bathrooms
 bathroom_options = sorted(df["baths"].dropna().unique())
 selected_baths = st.sidebar.multiselect("Select Bathrooms", bathroom_options, default=bathroom_options)
-
-# Price
 price_limit = st.sidebar.slider("Max Price ($ per person)", 800, 3000, 1600)
-
-# Square Footage
 min_sqft = int(df["sqft"].min())
 max_sqft = int(df["sqft"].max())
 sqft_range = st.sidebar.slider("Square Footage Range", min_sqft, max_sqft, (min_sqft, max_sqft))
@@ -82,17 +71,15 @@ filtered_df = df[
     (df["sqft"] <= sqft_range[1])
 ].copy()
 
-# --- Walk Time Calculation ---
+# --- Walk Time ---
 destination = UMD_SCHOOLS[school]
-filtered_df["walk time"] = filtered_df["address"].apply(
-    lambda addr: get_walking_time(addr, destination)
-)
+filtered_df["walk time"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
 
-# --- Display Table with Clean Formatting ---
+# --- Display Table ---
 cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "address", "walk time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
-# Format the display DataFrame as strings to control decimal places
+# Format Display
 clean_df = display_df.copy()
 clean_df["beds"] = clean_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
 clean_df["baths"] = clean_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
@@ -100,7 +87,6 @@ clean_df["price"] = clean_df["price"].apply(lambda x: f"${int(round(x)):,}")
 clean_df["sqft"] = clean_df["sqft"].apply(lambda x: f"{int(round(x)):,}")
 clean_df["$/sqft"] = clean_df["$/sqft"].apply(lambda x: f"{x:.2f}")
 
-# Color-style walk time column
 def style_walk_time(val):
     try:
         minutes = int(str(val).split()[0])
@@ -114,12 +100,10 @@ def style_walk_time(val):
         return "color: red"
 
 styled_df = clean_df.style.applymap(style_walk_time, subset=["walk time"])
-
-# --- Show DataFrame ---
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to **{school}**:")
 st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
-# --- CSV Download (use unformatted raw data) ---
+# --- CSV Download ---
 st.download_button(
     label="Download CSV",
     data=display_df.to_csv(index=False),
@@ -127,7 +111,57 @@ st.download_button(
     mime="text/csv"
 )
 
-# --- Description of Data ---
+# --- Geocode Addresses for Map ---
+@st.cache_data(show_spinner="Geocoding apartment addresses...")
+def geocode_addresses(addresses):
+    geolocator = Nominatim(user_agent="terpnest-app")
+    geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
+    latitudes, longitudes = [], []
+    for addr in addresses:
+        location = geocode(addr)
+        latitudes.append(location.latitude if location else None)
+        longitudes.append(location.longitude if location else None)
+    return latitudes, longitudes
+
+latitudes, longitudes = geocode_addresses(display_df["address"])
+display_df["lat"] = latitudes
+display_df["lon"] = longitudes
+map_df = display_df.dropna(subset=["lat", "lon"])
+
+# --- Interactive Map ---
+st.markdown("### Apartment Map View")
+st.pydeck_chart(pdk.Deck(
+    map_style="mapbox://styles/mapbox/light-v9",
+    initial_view_state=pdk.ViewState(
+        latitude=map_df["lat"].mean(),
+        longitude=map_df["lon"].mean(),
+        zoom=14,
+        pitch=40,
+    ),
+    layers=[
+        pdk.Layer(
+            "ScatterplotLayer",
+            data=map_df,
+            get_position='[lon, lat]',
+            get_color='[200, 30, 0, 160]',
+            get_radius=40,
+            pickable=True,
+        ),
+        pdk.Layer(
+            "TextLayer",
+            data=map_df,
+            get_position='[lon, lat]',
+            get_text="name",
+            get_size=14,
+            get_color=[0, 0, 0],
+            get_angle=0,
+            get_alignment_baseline="'bottom'",
+        )
+    ],
+    tooltip={"text": "{name}\n${price} | {walk time}"}
+))
+
+# --- Notes ---
 st.markdown("""
 ---
 ### Notes on the Data
