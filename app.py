@@ -131,22 +131,22 @@ map_df = display_df.dropna(subset=["lat", "lon"])
 # --- Interactive Map ---
 st.markdown("##Apartment Map View")
 
-# Hardcoded coordinates for each apartment complex
-map_data = pd.DataFrame([
-    {"name": "University View", "lat": 38.9844, "lon": -76.9387},
-    {"name": "The Varsity", "lat": 38.9870, "lon": -76.9385},
-    {"name": "Tempo", "lat": 38.9865, "lon": -76.9405},
-    {"name": "Terrapin Row", "lat": 38.9809, "lon": -76.9395},
-    {"name": "Union on Knox", "lat": 38.9819, "lon": -76.9390},
-    {"name": "The Standard", "lat": 38.9803, "lon": -76.9374},
-    {"name": "Aspen Heights", "lat": 38.9800, "lon": -76.9396},
-    {"name": "Landmark", "lat": 38.9839, "lon": -76.9373},
-    {"name": "The Hub", "lat": 38.9828, "lon": -76.9422},
+# --- Hardcoded apartment coordinates ---
+apartment_locations = pd.DataFrame([
+    {"name": "University View", "lat": 38.987354, "lon": -76.938698},
+    {"name": "The Varsity", "lat": 38.989403, "lon": -76.938431},
+    {"name": "Tempo", "lat": 38.988670, "lon": -76.938172},
+    {"name": "Terrapin Row", "lat": 38.982749, "lon": -76.939777},
+    {"name": "Union on Knox", "lat": 38.984993, "lon": -76.939812},
+    {"name": "The Standard", "lat": 38.983471, "lon": -76.937889},
+    {"name": "Aspen Heights", "lat": 38.981861, "lon": -76.939339},
+    {"name": "Landmark", "lat": 38.986492, "lon": -76.936562},
+    {"name": "Hub College Park", "lat": 38.982113, "lon": -76.939486},
 ])
 
-# Simple map with 1 dot per apartment
-st.map(map_data[["lat", "lon"]])
-
+# --- Add this where you want to show the map ---
+st.markdown("## Apartment Map View")
+st.map(apartment_locations, latitude="lat", longitude="lon", size=20)
 
 # --- Notes ---
 st.markdown("""
