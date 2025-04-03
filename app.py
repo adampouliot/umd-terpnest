@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-from geopy.geocoders import Nominatim
-from geopy.extra.rate_limiter import RateLimiter
 import pydeck as pdk
 from umd_schools import UMD_SCHOOLS
 from distance import get_walking_time
@@ -43,7 +41,7 @@ TerpNest is a free tool built by students, for students.
 st.markdown("---")
 st.title("Explore Available Apartments")
 
-# --- Normalize column names ---
+# --- Fallback check ---
 df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
 if df.empty or "price" not in df.columns:
@@ -75,11 +73,11 @@ filtered_df = df[
 destination = UMD_SCHOOLS[school]
 filtered_df["walk time"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
 
-# --- Format Data ---
+# --- Display Table ---
 cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "address", "walk time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
-# Format columns
+# Format Display
 clean_df = display_df.copy()
 clean_df["beds"] = clean_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
 clean_df["baths"] = clean_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
@@ -111,50 +109,46 @@ st.download_button(
     mime="text/csv"
 )
 
-# --- Hardcoded Apartment Coordinates (with labels) ---
-apartment_coords = pd.DataFrame([
-    {"name": "University View", "lat": 38.99246, "lon": -76.93402},
-    {"name": "The Varsity", "lat": 38.99144, "lon": -76.93427},
-    {"name": "Tempo", "lat": 38.99504, "lon": -76.93273},
-    {"name": "Terrapin Row", "lat": 38.98059, "lon": -76.94191},
-    {"name": "Union on Knox", "lat": 38.98132, "lon": -76.93899},
-    {"name": "The Standard", "lat": 38.97958, "lon": -76.94001},
-    {"name": "Aspen Heights", "lat": 38.98145, "lon": -76.94365},
-    {"name": "Landmark", "lat": 38.98237, "lon": -76.93684},
-    {"name": "Hub College Park", "lat": 38.98138, "lon": -76.94333},
+# --- Apartment Coordinates and URLs ---
+apartment_locations = pd.DataFrame([
+    {"name": "University View", "lat": 38.99246, "lon": -76.93402, "url": "https://live-theview.com"},
+    {"name": "The Varsity", "lat": 38.99144, "lon": -76.93427, "url": "https://www.varsitycollegepark.com"},
+    {"name": "Tempo", "lat": 38.99504, "lon": -76.93273, "url": "https://tempocollegepark.com"},
+    {"name": "Terrapin Row", "lat": 38.98059, "lon": -76.94191, "url": "https://www.terrapinrow.com"},
+    {"name": "Union on Knox", "lat": 38.98132, "lon": -76.93899, "url": "https://www.uniononknox.com"},
+    {"name": "The Standard", "lat": 38.97958, "lon": -76.94001, "url": "https://www.thestandardcollegepark.com"},
+    {"name": "Aspen Heights", "lat": 38.98145, "lon": -76.94365, "url": "https://www.aspencollegepark.com"},
+    {"name": "Landmark", "lat": 38.98237, "lon": -76.93684, "url": "https://www.landmarkcollegepark.com"},
+    {"name": "Hub College Park", "lat": 38.98138, "lon": -76.94333, "url": "https://huboncampus.com/college-park"},
 ])
 
-# --- Apartment Map View ---
+# --- Pydeck Interactive Map with clickable markers ---
 st.markdown("## Apartment Map View")
+
+layer = pdk.Layer(
+    "ScatterplotLayer",
+    apartment_locations,
+    pickable=True,
+    get_position='[lon, lat]',
+    get_fill_color='[200, 30, 0, 160]',
+    get_radius=60,
+)
+
+tooltip = {
+    "html": "<b>{name}</b><br><a href='{url}' target='_blank'>Visit Website</a>",
+    "style": {"backgroundColor": "steelblue", "color": "white"}
+}
+
+view_state = pdk.ViewState(latitude=38.9869, longitude=-76.9444, zoom=14)
+
 st.pydeck_chart(pdk.Deck(
-    map_style='mapbox://styles/mapbox/dark-v10',
-    initial_view_state=pdk.ViewState(
-        latitude=38.9848,
-        longitude=-76.9368,
-        zoom=14,
-        pitch=0,
-    ),
-    layers=[
-        pdk.Layer(
-            'ScatterplotLayer',
-            data=apartment_coords,
-            get_position='[lon, lat]',
-            get_fill_color='[255, 100, 100, 200]',
-            get_radius=50,
-        ),
-        pdk.Layer(
-            "TextLayer",
-            data=apartment_coords,
-            get_position='[lon, lat]',
-            get_text="name",
-            get_color=[255, 255, 255],
-            get_size=12,
-            get_alignment_baseline="'bottom'",
-        )
-    ]
+    map_style="mapbox://styles/mapbox/dark-v11",
+    initial_view_state=view_state,
+    layers=[layer],
+    tooltip=tooltip
 ))
 
-# --- Notes on the Data ---
+# --- Notes ---
 st.markdown("""
 ---
 ### Notes on the Data
