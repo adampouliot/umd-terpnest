@@ -43,7 +43,7 @@ TerpNest is a free tool built by students, for students.
 st.markdown("---")
 st.title("Explore Available Apartments")
 
-# --- Fallback check ---
+# --- Normalize column names ---
 df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
 if df.empty or "price" not in df.columns:
@@ -75,11 +75,11 @@ filtered_df = df[
 destination = UMD_SCHOOLS[school]
 filtered_df["walk time"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
 
-# --- Display Table ---
+# --- Format Data ---
 cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "address", "walk time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
-# Format Display
+# Format columns
 clean_df = display_df.copy()
 clean_df["beds"] = clean_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
 clean_df["baths"] = clean_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
@@ -111,25 +111,8 @@ st.download_button(
     mime="text/csv"
 )
 
-# --- Geocode Addresses for Map ---
-@st.cache_data(show_spinner="Geocoding apartment addresses...")
-def geocode_addresses(addresses):
-    geolocator = Nominatim(user_agent="terpnest-app")
-    geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
-    latitudes, longitudes = [], []
-    for addr in addresses:
-        location = geocode(addr)
-        latitudes.append(location.latitude if location else None)
-        longitudes.append(location.longitude if location else None)
-    return latitudes, longitudes
-
-latitudes, longitudes = geocode_addresses(display_df["address"])
-display_df["lat"] = latitudes
-display_df["lon"] = longitudes
-map_df = display_df.dropna(subset=["lat", "lon"])
-
-# --- Hardcoded apartment coordinates ---
-apartment_locations = pd.DataFrame([
+# --- Hardcoded Apartment Coordinates (with labels) ---
+apartment_coords = pd.DataFrame([
     {"name": "University View", "lat": 38.99246, "lon": -76.93402},
     {"name": "The Varsity", "lat": 38.99144, "lon": -76.93427},
     {"name": "Tempo", "lat": 38.99504, "lon": -76.93273},
@@ -141,11 +124,37 @@ apartment_locations = pd.DataFrame([
     {"name": "Hub College Park", "lat": 38.98138, "lon": -76.94333},
 ])
 
-# --- Add this where you want to show the map ---
+# --- Apartment Map View ---
 st.markdown("## Apartment Map View")
-st.map(apartment_locations, latitude="lat", longitude="lon", size=20)
+st.pydeck_chart(pdk.Deck(
+    map_style='mapbox://styles/mapbox/dark-v10',
+    initial_view_state=pdk.ViewState(
+        latitude=38.9848,
+        longitude=-76.9368,
+        zoom=14,
+        pitch=0,
+    ),
+    layers=[
+        pdk.Layer(
+            'ScatterplotLayer',
+            data=apartment_coords,
+            get_position='[lon, lat]',
+            get_fill_color='[255, 100, 100, 200]',
+            get_radius=50,
+        ),
+        pdk.Layer(
+            "TextLayer",
+            data=apartment_coords,
+            get_position='[lon, lat]',
+            get_text="name",
+            get_color=[255, 255, 255],
+            get_size=12,
+            get_alignment_baseline="'bottom'",
+        )
+    ]
+))
 
-# --- Notes ---
+# --- Notes on the Data ---
 st.markdown("""
 ---
 ### Notes on the Data
