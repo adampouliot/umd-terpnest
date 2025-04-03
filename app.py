@@ -76,7 +76,7 @@ destination = UMD_SCHOOLS[school]
 filtered_df["walk time"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
 
 # --- Format Data ---
-cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "address", "walk time"]
+cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "walk time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
 # Format columns
