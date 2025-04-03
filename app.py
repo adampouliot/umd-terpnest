@@ -6,23 +6,36 @@ import pydeck as pdk
 from umd_schools import UMD_SCHOOLS
 from distance import get_walking_time
 
-# --- Theme Toggle at Top ---
-query_params = st.experimental_get_query_params()
-current_theme = query_params.get("theme", ["light"])[0]
-theme_switch = st.toggle("🌗 Toggle Dark Mode", value=(current_theme == "dark"))
-
-# --- If theme switch toggled, update and reload ---
-new_theme = "dark" if theme_switch else "light"
-if new_theme != current_theme:
-    st.experimental_set_query_params(theme=new_theme)
-    st.experimental_rerun()
-
-# --- Streamlit Config ---
 st.set_page_config(
     page_title="TerpNest | UMD Apartment Finder",
     page_icon="favicon.png",
     layout="wide"
 )
+
+# --- Theme Toggle ---
+theme = st.radio("Choose Theme", ["🌙 Dark Mode", "☀️ Light Mode"], horizontal=True)
+
+# Apply light or dark CSS
+if theme == "☀️ Light Mode":
+    st.markdown("""
+        <style>
+            body, .main, .block-container {
+                background-color: #ffffff;
+                color: #000000;
+            }
+            .stDataFrame { background-color: #ffffff; }
+        </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+        <style>
+            body, .main, .block-container {
+                background-color: #0e1117;
+                color: #ffffff;
+            }
+            .stDataFrame { background-color: #0e1117; }
+        </style>
+    """, unsafe_allow_html=True)
 
 # --- Load CSV ---
 try:
@@ -55,7 +68,7 @@ TerpNest is a free tool built by students, for students.
 st.markdown("---")
 st.title("Explore Available Apartments")
 
-# --- Fallback check ---
+# --- Normalize column names ---
 df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
 if df.empty or "price" not in df.columns:
@@ -87,17 +100,17 @@ filtered_df = df[
 destination = UMD_SCHOOLS[school]
 filtered_df["walk time"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
 
-# --- Display Table ---
+# --- Format Data ---
 cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "walk time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
-# Format Display
+# Format columns
 clean_df = display_df.copy()
-clean_df["beds"] = clean_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if float(x) % 1 else str(int(x)))
-clean_df["baths"] = clean_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if float(x) % 1 else str(int(x)))
-clean_df["price"] = clean_df["price"].apply(lambda x: f"${int(round(float(x))):,}")
-clean_df["sqft"] = clean_df["sqft"].apply(lambda x: f"{int(round(float(x))):,}")
-clean_df["$/sqft"] = clean_df["$/sqft"].apply(lambda x: f"{float(x):.2f}")
+clean_df["beds"] = clean_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
+clean_df["baths"] = clean_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
+clean_df["price"] = clean_df["price"].apply(lambda x: f"${int(round(x)):,}")
+clean_df["sqft"] = clean_df["sqft"].apply(lambda x: f"{int(round(x)):,}")
+clean_df["$/sqft"] = clean_df["$/sqft"].apply(lambda x: f"{x:.2f}")
 
 def style_walk_time(val):
     try:
@@ -123,44 +136,50 @@ st.download_button(
     mime="text/csv"
 )
 
-# --- Hardcoded apartment coordinates ---
-apartment_locations = pd.DataFrame([
-    {"name": "University View", "lat": 38.99246, "lon": -76.93402, "url": "https://live-theview.com"},
-    {"name": "The Varsity", "lat": 38.99144, "lon": -76.93427, "url": "https://www.varsitycollegepark.com"},
-    {"name": "Tempo", "lat": 38.99504, "lon": -76.93273, "url": "https://tempocollegepark.com/"},
-    {"name": "Terrapin Row", "lat": 38.98059, "lon": -76.94191, "url": "https://www.terrapinrow.com"},
-    {"name": "Union on Knox", "lat": 38.98132, "lon": -76.93899, "url": "https://www.uniononknox.com"},
-    {"name": "The Standard", "lat": 38.97958, "lon": -76.94001, "url": "https://www.thestandardcollegepark.com/"},
-    {"name": "Aspen Heights", "lat": 38.98145, "lon": -76.94365, "url": "https://www.aspencollegepark.com/"},
-    {"name": "Landmark", "lat": 38.98237, "lon": -76.93684, "url": "https://www.landmarkcollegepark.com"},
-    {"name": "Hub College Park", "lat": 38.98138, "lon": -76.94333, "url": "https://huboncampus.com/college-park/"}
+# --- Hardcoded Apartment Coordinates (with labels) ---
+apartment_coords = pd.DataFrame([
+    {"name": "University View", "lat": 38.99246, "lon": -76.93402},
+    {"name": "The Varsity", "lat": 38.99144, "lon": -76.93427},
+    {"name": "Tempo", "lat": 38.99504, "lon": -76.93273},
+    {"name": "Terrapin Row", "lat": 38.98059, "lon": -76.94191},
+    {"name": "Union on Knox", "lat": 38.98132, "lon": -76.93899},
+    {"name": "The Standard", "lat": 38.97958, "lon": -76.94001},
+    {"name": "Aspen Heights", "lat": 38.98145, "lon": -76.94365},
+    {"name": "Landmark", "lat": 38.98237, "lon": -76.93684},
+    {"name": "Hub College Park", "lat": 38.98138, "lon": -76.94333},
 ])
 
+# --- Apartment Map View ---
 st.markdown("## Apartment Map View")
 st.pydeck_chart(pdk.Deck(
+    map_style='mapbox://styles/mapbox/dark-v10',
     initial_view_state=pdk.ViewState(
-        latitude=38.9875,
-        longitude=-76.9375,
+        latitude=38.9848,
+        longitude=-76.9368,
         zoom=14,
         pitch=0,
     ),
     layers=[
         pdk.Layer(
-            "ScatterplotLayer",
-            data=apartment_locations,
+            'ScatterplotLayer',
+            data=apartment_coords,
             get_position='[lon, lat]',
-            get_radius=30,
-            get_fill_color=[0, 120, 255],
-            pickable=True
+            get_fill_color='[255, 100, 100, 200]',
+            get_radius=50,
+        ),
+        pdk.Layer(
+            "TextLayer",
+            data=apartment_coords,
+            get_position='[lon, lat]',
+            get_text="name",
+            get_color=[255, 255, 255],
+            get_size=12,
+            get_alignment_baseline="'bottom'",
         )
-    ],
-    tooltip={
-        "html": "<b>{name}</b><br><a href='{url}' target='_blank'>Visit Website</a>",
-        "style": {"color": "white"}
-    }
+    ]
 ))
 
-# --- Notes ---
+# --- Notes on the Data ---
 st.markdown("""
 ---
 ### Notes on the Data
