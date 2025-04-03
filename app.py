@@ -85,8 +85,10 @@ filtered_df = df[
     (df["price"] <= price_limit) &
     (df["beds"].isin(selected_beds)) &
     (df["baths"].isin(selected_baths)) &
-    (df["sqft"] >= sqft_range[0]) &
-    (df["sqft"] <= sqft_range[1])
+    (
+        df["sqft"].isna() |  # include listings with missing sqft
+        ((df["sqft"] >= sqft_range[0]) & (df["sqft"] <= sqft_range[1]))
+    )
 ].copy()
 
 # --- Walk Time ---
