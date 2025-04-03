@@ -64,6 +64,7 @@ TerpNest is a free tool built by students, for students.
 """)
 st.markdown("---")
 st.title("Explore Available Apartments")
+st.markdown("Last Updated: April 4, 2025")
 
 # --- Normalize column names ---
 df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
