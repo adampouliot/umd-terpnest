@@ -129,37 +129,24 @@ display_df["lon"] = longitudes
 map_df = display_df.dropna(subset=["lat", "lon"])
 
 # --- Interactive Map ---
-st.markdown("### Apartment Map View")
-st.pydeck_chart(pdk.Deck(
-    map_style="mapbox://styles/mapbox/light-v9",
-    initial_view_state=pdk.ViewState(
-        latitude=map_df["lat"].mean(),
-        longitude=map_df["lon"].mean(),
-        zoom=14,
-        pitch=40,
-    ),
-    layers=[
-        pdk.Layer(
-            "ScatterplotLayer",
-            data=map_df,
-            get_position='[lon, lat]',
-            get_color='[200, 30, 0, 160]',
-            get_radius=40,
-            pickable=True,
-        ),
-        pdk.Layer(
-            "TextLayer",
-            data=map_df,
-            get_position='[lon, lat]',
-            get_text="name",
-            get_size=14,
-            get_color=[0, 0, 0],
-            get_angle=0,
-            get_alignment_baseline="'bottom'",
-        )
-    ],
-    tooltip={"text": "{name}\n${price} | {walk time}"}
-))
+st.markdown("##Apartment Map View")
+
+# Hardcoded coordinates for each apartment complex
+map_data = pd.DataFrame([
+    {"name": "University View", "lat": 38.9844, "lon": -76.9387},
+    {"name": "The Varsity", "lat": 38.9870, "lon": -76.9385},
+    {"name": "Tempo", "lat": 38.9865, "lon": -76.9405},
+    {"name": "Terrapin Row", "lat": 38.9809, "lon": -76.9395},
+    {"name": "Union on Knox", "lat": 38.9819, "lon": -76.9390},
+    {"name": "The Standard", "lat": 38.9803, "lon": -76.9374},
+    {"name": "Aspen Heights", "lat": 38.9800, "lon": -76.9396},
+    {"name": "Landmark", "lat": 38.9839, "lon": -76.9373},
+    {"name": "The Hub", "lat": 38.9828, "lon": -76.9422},
+])
+
+# Simple map with 1 dot per apartment
+st.map(map_data[["lat", "lon"]])
+
 
 # --- Notes ---
 st.markdown("""
