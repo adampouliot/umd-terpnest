@@ -131,14 +131,14 @@ map_df = display_df.dropna(subset=["lat", "lon"])
 # --- Hardcoded apartment coordinates ---
 apartment_locations = pd.DataFrame([
     {"name": "University View", "lat": 38.99246, "lon": -76.93402},
-    {"name": "The Varsity", "lat": 38.989403, "lon": -76.938431},
-    {"name": "Tempo", "lat": 38.988670, "lon": -76.938172},
-    {"name": "Terrapin Row", "lat": 38.982749, "lon": -76.939777},
-    {"name": "Union on Knox", "lat": 38.984993, "lon": -76.939812},
-    {"name": "The Standard", "lat": 38.983471, "lon": -76.937889},
-    {"name": "Aspen Heights", "lat": 38.981861, "lon": -76.939339},
-    {"name": "Landmark", "lat": 38.986492, "lon": -76.936562},
-    {"name": "Hub College Park", "lat": 38.982113, "lon": -76.939486},
+    {"name": "The Varsity", "lat": 38.99144, "lon": -76.93427},
+    {"name": "Tempo", "lat": 38.99504, "lon": -76.93273},
+    {"name": "Terrapin Row", "lat": 38.98059, "lon": -76.94191},
+    {"name": "Union on Knox", "lat": 38.98132, "lon": -76.93899},
+    {"name": "The Standard", "lat": 38.97958, "lon": -76.94001},
+    {"name": "Aspen Heights", "lat": 38.98145, "lon": -76.94365},
+    {"name": "Landmark", "lat": 38.98237, "lon": -76.93684},
+    {"name": "Hub College Park", "lat": 38.98138, "lon": -76.94333},
 ])
 
 # --- Add this where you want to show the map ---
