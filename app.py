@@ -16,24 +16,20 @@ st.set_page_config(
 # --- Hide Streamlit UI elements & apply custom font ---
 st.markdown("""
     <style>
-    /* Import Inter font from Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif !important;
     }
-
-    /* Hide Streamlit UI elements */
     [data-testid="stToolbar"] { visibility: hidden !important; }
     #MainMenu, footer { visibility: hidden !important; }
     </style>
 """, unsafe_allow_html=True)
 
-
 # --- Load CSV ---
 try:
     df = pd.read_csv("apartments.csv")
     df["price"] = df["price"].replace('[\$,]', '', regex=True).astype(float)
+    df["sqft"] = pd.to_numeric(df["sqft"], errors="coerce")  # ✅ safe sqft
     df["$/sqft"] = df["$/sqft"].replace('[\$,]', '', regex=True).astype(float)
 except Exception as e:
     st.error("🚨 Failed to load apartment data.")
@@ -42,7 +38,6 @@ except Exception as e:
 
 # --- Header ---
 st.markdown("# TerpNest\n### The Smarter Way to Find UMD Apartments")
-
 st.markdown("""
 ---
 TerpNest is a free tool built by students, for students.
@@ -57,7 +52,6 @@ TerpNest is a free tool built by students, for students.
 
 **Get started below and find your next place to live. It's totally free.**
 """)
-
 st.markdown("---")
 st.title("Explore Available Apartments")
 
@@ -76,8 +70,8 @@ selected_beds = st.sidebar.multiselect("Select Bedrooms", bedroom_options, defau
 bathroom_options = sorted(df["baths"].dropna().unique())
 selected_baths = st.sidebar.multiselect("Select Bathrooms", bathroom_options, default=bathroom_options)
 price_limit = st.sidebar.slider("Max Price ($ per person)", 800, 3000, 1600)
-min_sqft = int(df["sqft"].min())
-max_sqft = int(df["sqft"].max())
+min_sqft = int(df["sqft"].min(skipna=True))
+max_sqft = int(df["sqft"].max(skipna=True))
 sqft_range = st.sidebar.slider("Square Footage Range", min_sqft, max_sqft, (min_sqft, max_sqft))
 
 # --- Apply Filters ---
@@ -86,7 +80,7 @@ filtered_df = df[
     (df["beds"].isin(selected_beds)) &
     (df["baths"].isin(selected_baths)) &
     (
-        df["sqft"].isna() |  # include listings with missing sqft
+        df["sqft"].isna() |  # ✅ include listings with missing sqft
         ((df["sqft"] >= sqft_range[0]) & (df["sqft"] <= sqft_range[1]))
     )
 ].copy()
@@ -99,14 +93,15 @@ filtered_df["walk time"] = filtered_df["address"].apply(lambda addr: get_walking
 cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "walk time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
-# Format columns
+# --- Format columns nicely ---
 clean_df = display_df.copy()
 clean_df["beds"] = clean_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
 clean_df["baths"] = clean_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
 clean_df["price"] = clean_df["price"].apply(lambda x: f"${int(round(x)):,}")
-clean_df["sqft"] = clean_df["sqft"].apply(lambda x: f"{int(round(x)):,}")
+clean_df["sqft"] = clean_df["sqft"].apply(lambda x: f"{int(round(x)):,}" if pd.notnull(x) else "N/A")  # ✅ Safe
 clean_df["$/sqft"] = clean_df["$/sqft"].apply(lambda x: f"{x:.2f}")
 
+# --- Walk time styling ---
 def style_walk_time(val):
     try:
         minutes = int(str(val).split()[0])
@@ -144,7 +139,7 @@ apartment_coords = pd.DataFrame([
     {"name": "Hub College Park", "lat": 38.98138, "lon": -76.94333},
 ])
 
-# --- Apartment Map View ---
+# --- Map View ---
 st.markdown("## Apartment Map View")
 st.pydeck_chart(pdk.Deck(
     map_style='mapbox://styles/mapbox/dark-v10',
@@ -174,7 +169,7 @@ st.pydeck_chart(pdk.Deck(
     ]
 ))
 
-# --- Notes on the Data ---
+# --- Notes ---
 st.markdown("""
 ---
 ### Notes on the Data
