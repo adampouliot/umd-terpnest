@@ -87,10 +87,12 @@ filtered_df = df[
 
 # --- Walk Time ---
 destination = UMD_SCHOOLS[school]
-filtered_df["walk time"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
+# Compute walk time as both numeric and formatted string
+filtered_df["walk_time_mins"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
+filtered_df["walk time"] = filtered_df["walk_time_mins"].apply(lambda x: f"{x} mins" if pd.notnull(x) else "N/A")
 
 # --- Format Data ---
-cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "walk time"]
+cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "walk_time_mins", "walk time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
 # --- Format columns nicely ---
@@ -100,6 +102,8 @@ clean_df["baths"] = clean_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rst
 clean_df["price"] = clean_df["price"].apply(lambda x: f"${int(round(x)):,}")
 clean_df["sqft"] = clean_df["sqft"].apply(lambda x: f"{int(round(x)):,}" if pd.notnull(x) else "N/A")  # ✅ Safe
 clean_df["$/sqft"] = clean_df["$/sqft"].apply(lambda x: f"{x:.2f}")
+
+display_df = filtered_df[cols].reset_index(drop=True).sort_values("walk_time_mins")
 
 # --- Walk time styling ---
 def style_walk_time(val):
@@ -115,6 +119,7 @@ def style_walk_time(val):
         return "color: red"
 
 styled_df = clean_df.style.applymap(style_walk_time, subset=["walk time"])
+clean_df.drop(columns=["walk_time_mins"], inplace=True)
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to **{school}**:")
 st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
