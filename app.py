@@ -6,20 +6,23 @@ import pydeck as pdk
 from umd_schools import UMD_SCHOOLS
 from distance import get_walking_time
 
-# --- Theme Toggle ---
-st.set_page_config(page_title="TerpNest | UMD Apartment Finder", page_icon="favicon.png", layout="wide")
+# --- Theme Toggle at Top ---
+query_params = st.experimental_get_query_params()
+current_theme = query_params.get("theme", ["light"])[0]
+theme_switch = st.toggle("🌗 Toggle Dark Mode", value=(current_theme == "dark"))
 
-# Light/Dark Mode toggle
-mode = st.sidebar.radio("🌗 Theme Mode", options=["Dark Mode", "Light Mode"])
-if mode == "Light Mode":
-    st.markdown("""
-        <style>
-        html, body, [class*="css"] {
-            background-color: #ffffff;
-            color: #000000;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+# --- If theme switch toggled, update and reload ---
+new_theme = "dark" if theme_switch else "light"
+if new_theme != current_theme:
+    st.experimental_set_query_params(theme=new_theme)
+    st.experimental_rerun()
+
+# --- Streamlit Config ---
+st.set_page_config(
+    page_title="TerpNest | UMD Apartment Finder",
+    page_icon="favicon.png",
+    layout="wide"
+)
 
 # --- Load CSV ---
 try:
@@ -90,11 +93,11 @@ display_df = filtered_df[cols].reset_index(drop=True)
 
 # Format Display
 clean_df = display_df.copy()
-clean_df["beds"] = clean_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
-clean_df["baths"] = clean_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
-clean_df["price"] = clean_df["price"].apply(lambda x: f"${int(round(x)):,}")
-clean_df["sqft"] = clean_df["sqft"].apply(lambda x: f"{int(round(x)):,}")
-clean_df["$/sqft"] = clean_df["$/sqft"].apply(lambda x: f"{x:.2f}")
+clean_df["beds"] = clean_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if float(x) % 1 else str(int(x)))
+clean_df["baths"] = clean_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if float(x) % 1 else str(int(x)))
+clean_df["price"] = clean_df["price"].apply(lambda x: f"${int(round(float(x))):,}")
+clean_df["sqft"] = clean_df["sqft"].apply(lambda x: f"{int(round(float(x))):,}")
+clean_df["$/sqft"] = clean_df["$/sqft"].apply(lambda x: f"{float(x):.2f}")
 
 def style_walk_time(val):
     try:
@@ -115,12 +118,12 @@ st.dataframe(styled_df, use_container_width=True, hide_index=True)
 # --- CSV Download ---
 st.download_button(
     label="Download CSV",
-    data=filtered_df.to_csv(index=False),
+    data=display_df.to_csv(index=False),
     file_name="filtered_apartments.csv",
     mime="text/csv"
 )
 
-# --- Apartment Coordinates + URLs for Map ---
+# --- Hardcoded apartment coordinates ---
 apartment_locations = pd.DataFrame([
     {"name": "University View", "lat": 38.99246, "lon": -76.93402, "url": "https://live-theview.com"},
     {"name": "The Varsity", "lat": 38.99144, "lon": -76.93427, "url": "https://www.varsitycollegepark.com"},
@@ -130,26 +133,29 @@ apartment_locations = pd.DataFrame([
     {"name": "The Standard", "lat": 38.97958, "lon": -76.94001, "url": "https://www.thestandardcollegepark.com/"},
     {"name": "Aspen Heights", "lat": 38.98145, "lon": -76.94365, "url": "https://www.aspencollegepark.com/"},
     {"name": "Landmark", "lat": 38.98237, "lon": -76.93684, "url": "https://www.landmarkcollegepark.com"},
-    {"name": "Hub College Park", "lat": 38.98138, "lon": -76.94333, "url": "https://huboncampus.com/college-park/"},
+    {"name": "Hub College Park", "lat": 38.98138, "lon": -76.94333, "url": "https://huboncampus.com/college-park/"}
 ])
 
 st.markdown("## Apartment Map View")
-
 st.pydeck_chart(pdk.Deck(
-    map_style="mapbox://styles/mapbox/dark-v10" if mode == "Dark Mode" else "mapbox://styles/mapbox/light-v10",
-    initial_view_state=pdk.ViewState(latitude=38.9869, longitude=-76.9400, zoom=14, pitch=0),
+    initial_view_state=pdk.ViewState(
+        latitude=38.9875,
+        longitude=-76.9375,
+        zoom=14,
+        pitch=0,
+    ),
     layers=[
         pdk.Layer(
             "ScatterplotLayer",
             data=apartment_locations,
             get_position='[lon, lat]',
-            get_radius=50,
-            get_fill_color=[200, 30, 0, 160],
-            pickable=True,
+            get_radius=30,
+            get_fill_color=[0, 120, 255],
+            pickable=True
         )
     ],
     tooltip={
-        "html": "<b>{name}</b><br><a href='{url}' target='_blank'>Visit Site</a>",
+        "html": "<b>{name}</b><br><a href='{url}' target='_blank'>Visit Website</a>",
         "style": {"color": "white"}
     }
 ))
