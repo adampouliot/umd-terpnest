@@ -1,10 +1,20 @@
 import streamlit as st
 import pandas as pd
+import re
 from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
 import pydeck as pdk
 from umd_schools import UMD_SCHOOLS
 from distance import get_walking_time
+
+# --- Helper to parse walk time safely ---
+def parse_minutes(value):
+    if isinstance(value, (int, float)):
+        return value
+    if isinstance(value, str):
+        match = re.search(r"(\d+)", value)
+        return int(match.group(1)) if match else None
+    return None
 
 # --- Page config ---
 st.set_page_config(
@@ -87,9 +97,10 @@ filtered_df = df[
 
 # --- Walk Time ---
 destination = UMD_SCHOOLS[school]
-filtered_df["walk_time_mins"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
+filtered_df["walk_time_raw"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
+filtered_df["walk_time_mins"] = filtered_df["walk_time_raw"].apply(parse_minutes)
 filtered_df["walk time"] = filtered_df["walk_time_mins"].apply(
-    lambda x: f"{int(x)} mins" if isinstance(x, (int, float)) and pd.notnull(x) else "N/A"
+    lambda x: f"{int(x)} mins" if pd.notnull(x) else "N/A"
 )
 
 # --- Format columns nicely ---
@@ -114,7 +125,7 @@ def style_walk_time(val):
 
 # --- Display table ---
 filtered_df.sort_values("walk_time_mins", inplace=True)
-export_df = filtered_df.drop(columns=["walk_time_mins"])
+export_df = filtered_df.drop(columns=["walk_time_raw", "walk_time_mins"])
 styled_df = export_df.style.applymap(style_walk_time, subset=["walk time"])
 
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to **{school}**:")
