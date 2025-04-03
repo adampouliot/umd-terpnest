@@ -12,31 +12,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- Theme Toggle ---
-theme = st.radio("Choose Theme", ["🌙 Dark Mode", "☀️ Light Mode"], horizontal=True)
-
-# Apply light or dark CSS
-if theme == "☀️ Light Mode":
-    st.markdown("""
-        <style>
-            body, .main, .block-container {
-                background-color: #ffffff;
-                color: #000000;
-            }
-            .stDataFrame { background-color: #ffffff; }
-        </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-        <style>
-            body, .main, .block-container {
-                background-color: #0e1117;
-                color: #ffffff;
-            }
-            .stDataFrame { background-color: #0e1117; }
-        </style>
-    """, unsafe_allow_html=True)
-
 # --- Load CSV ---
 try:
     df = pd.read_csv("apartments.csv")
