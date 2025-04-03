@@ -88,7 +88,9 @@ filtered_df = df[
 # --- Walk Time ---
 destination = UMD_SCHOOLS[school]
 filtered_df["walk_time_mins"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
-filtered_df["walk time"] = filtered_df["walk_time_mins"].apply(lambda x: f"{int(x)} mins" if pd.notnull(x) else "N/A")
+filtered_df["walk time"] = filtered_df["walk_time_mins"].apply(
+    lambda x: f"{int(x)} mins" if isinstance(x, (int, float)) and pd.notnull(x) else "N/A"
+)
 
 # --- Format columns nicely ---
 filtered_df["beds"] = filtered_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
