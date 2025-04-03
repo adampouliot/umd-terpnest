@@ -29,7 +29,7 @@ st.markdown("""
 try:
     df = pd.read_csv("apartments.csv")
     df["price"] = df["price"].replace('[\$,]', '', regex=True).astype(float)
-    df["sqft"] = pd.to_numeric(df["sqft"], errors="coerce")  # ✅ safe sqft
+    df["sqft"] = pd.to_numeric(df["sqft"], errors="coerce")
     df["$/sqft"] = df["$/sqft"].replace('[\$,]', '', regex=True).astype(float)
 except Exception as e:
     st.error("🚨 Failed to load apartment data.")
@@ -80,30 +80,22 @@ filtered_df = df[
     (df["beds"].isin(selected_beds)) &
     (df["baths"].isin(selected_baths)) &
     (
-        df["sqft"].isna() |  # ✅ include listings with missing sqft
+        df["sqft"].isna() |
         ((df["sqft"] >= sqft_range[0]) & (df["sqft"] <= sqft_range[1]))
     )
 ].copy()
 
 # --- Walk Time ---
 destination = UMD_SCHOOLS[school]
-# Compute walk time as both numeric and formatted string
 filtered_df["walk_time_mins"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
-filtered_df["walk time"] = filtered_df["walk_time_mins"].apply(lambda x: f"{x} mins" if pd.notnull(x) else "N/A")
-
-# --- Format Data ---
-cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "walk_time_mins", "walk time"]
-display_df = filtered_df[cols].reset_index(drop=True)
+filtered_df["walk time"] = filtered_df["walk_time_mins"].apply(lambda x: f"{int(x)} mins" if pd.notnull(x) else "N/A")
 
 # --- Format columns nicely ---
-clean_df = display_df.copy()
-clean_df["beds"] = clean_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
-clean_df["baths"] = clean_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
-clean_df["price"] = clean_df["price"].apply(lambda x: f"${int(round(x)):,}")
-clean_df["sqft"] = clean_df["sqft"].apply(lambda x: f"{int(round(x)):,}" if pd.notnull(x) else "N/A")  # ✅ Safe
-clean_df["$/sqft"] = clean_df["$/sqft"].apply(lambda x: f"{x:.2f}")
-
-display_df = filtered_df[cols].reset_index(drop=True).sort_values("walk_time_mins")
+filtered_df["beds"] = filtered_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
+filtered_df["baths"] = filtered_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
+filtered_df["price"] = filtered_df["price"].apply(lambda x: f"${int(round(x)):,}")
+filtered_df["sqft"] = filtered_df["sqft"].apply(lambda x: f"{int(round(x)):,}" if pd.notnull(x) else "N/A")
+filtered_df["$/sqft"] = filtered_df["$/sqft"].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "nan")
 
 # --- Walk time styling ---
 def style_walk_time(val):
@@ -118,20 +110,23 @@ def style_walk_time(val):
     else:
         return "color: red"
 
-styled_df = clean_df.style.applymap(style_walk_time, subset=["walk time"])
-clean_df.drop(columns=["walk_time_mins"], inplace=True)
+# --- Display table ---
+filtered_df.sort_values("walk_time_mins", inplace=True)
+export_df = filtered_df.drop(columns=["walk_time_mins"])
+styled_df = export_df.style.applymap(style_walk_time, subset=["walk time"])
+
 st.write(f"Apartments filtered by price, bedrooms, and walking distance to **{school}**:")
 st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
 # --- CSV Download ---
 st.download_button(
     label="Download CSV",
-    data=display_df.to_csv(index=False),
+    data=export_df.to_csv(index=False),
     file_name="filtered_apartments.csv",
     mime="text/csv"
 )
 
-# --- Hardcoded Apartment Coordinates (with labels) ---
+# --- Map Coordinates ---
 apartment_coords = pd.DataFrame([
     {"name": "University View", "lat": 38.99246, "lon": -76.93402},
     {"name": "The Varsity", "lat": 38.99144, "lon": -76.93427},
