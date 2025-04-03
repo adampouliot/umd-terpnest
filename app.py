@@ -6,36 +6,20 @@ import pydeck as pdk
 from umd_schools import UMD_SCHOOLS
 from distance import get_walking_time
 
-st.set_page_config(
-    page_title="TerpNest | UMD Apartment Finder",
-    page_icon="favicon.png",
-    layout="wide"
-)
-
 # --- Theme Toggle ---
-theme = st.radio("Choose Theme", ["🌙 Dark Mode", "☀️ Light Mode"], horizontal=True)
+st.set_page_config(page_title="TerpNest | UMD Apartment Finder", page_icon="favicon.png", layout="wide")
 
-# Apply light or dark CSS
-if theme == "☀️ Light Mode":
+# Light/Dark Mode toggle
+mode = st.sidebar.radio("🌗 Theme Mode", options=["Dark Mode", "Light Mode"])
+if mode == "Light Mode":
     st.markdown("""
         <style>
-            body, .main, .block-container {
-                background-color: #ffffff;
-                color: #000000;
-            }
-            .stDataFrame { background-color: #ffffff; }
+        html, body, [class*="css"] {
+            background-color: #ffffff;
+            color: #000000;
+        }
         </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-        <style>
-            body, .main, .block-container {
-                background-color: #0e1117;
-                color: #ffffff;
-            }
-            .stDataFrame { background-color: #0e1117; }
-        </style>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
 # --- Load CSV ---
 try:
@@ -68,7 +52,7 @@ TerpNest is a free tool built by students, for students.
 st.markdown("---")
 st.title("Explore Available Apartments")
 
-# --- Normalize column names ---
+# --- Fallback check ---
 df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
 
 if df.empty or "price" not in df.columns:
@@ -100,11 +84,11 @@ filtered_df = df[
 destination = UMD_SCHOOLS[school]
 filtered_df["walk time"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
 
-# --- Format Data ---
+# --- Display Table ---
 cols = ["name", "beds", "baths", "price", "sqft", "$/sqft", "walk time"]
 display_df = filtered_df[cols].reset_index(drop=True)
 
-# Format columns
+# Format Display
 clean_df = display_df.copy()
 clean_df["beds"] = clean_df["beds"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
 clean_df["baths"] = clean_df["baths"].apply(lambda x: f"{x:.1f}".rstrip('0').rstrip('.') if x % 1 else str(int(x)))
@@ -131,55 +115,46 @@ st.dataframe(styled_df, use_container_width=True, hide_index=True)
 # --- CSV Download ---
 st.download_button(
     label="Download CSV",
-    data=display_df.to_csv(index=False),
+    data=filtered_df.to_csv(index=False),
     file_name="filtered_apartments.csv",
     mime="text/csv"
 )
 
-# --- Hardcoded Apartment Coordinates (with labels) ---
-apartment_coords = pd.DataFrame([
-    {"name": "University View", "lat": 38.99246, "lon": -76.93402},
-    {"name": "The Varsity", "lat": 38.99144, "lon": -76.93427},
-    {"name": "Tempo", "lat": 38.99504, "lon": -76.93273},
-    {"name": "Terrapin Row", "lat": 38.98059, "lon": -76.94191},
-    {"name": "Union on Knox", "lat": 38.98132, "lon": -76.93899},
-    {"name": "The Standard", "lat": 38.97958, "lon": -76.94001},
-    {"name": "Aspen Heights", "lat": 38.98145, "lon": -76.94365},
-    {"name": "Landmark", "lat": 38.98237, "lon": -76.93684},
-    {"name": "Hub College Park", "lat": 38.98138, "lon": -76.94333},
+# --- Apartment Coordinates + URLs for Map ---
+apartment_locations = pd.DataFrame([
+    {"name": "University View", "lat": 38.99246, "lon": -76.93402, "url": "https://live-theview.com"},
+    {"name": "The Varsity", "lat": 38.99144, "lon": -76.93427, "url": "https://www.varsitycollegepark.com"},
+    {"name": "Tempo", "lat": 38.99504, "lon": -76.93273, "url": "https://tempocollegepark.com/"},
+    {"name": "Terrapin Row", "lat": 38.98059, "lon": -76.94191, "url": "https://www.terrapinrow.com"},
+    {"name": "Union on Knox", "lat": 38.98132, "lon": -76.93899, "url": "https://www.uniononknox.com"},
+    {"name": "The Standard", "lat": 38.97958, "lon": -76.94001, "url": "https://www.thestandardcollegepark.com/"},
+    {"name": "Aspen Heights", "lat": 38.98145, "lon": -76.94365, "url": "https://www.aspencollegepark.com/"},
+    {"name": "Landmark", "lat": 38.98237, "lon": -76.93684, "url": "https://www.landmarkcollegepark.com"},
+    {"name": "Hub College Park", "lat": 38.98138, "lon": -76.94333, "url": "https://huboncampus.com/college-park/"},
 ])
 
-# --- Apartment Map View ---
 st.markdown("## Apartment Map View")
+
 st.pydeck_chart(pdk.Deck(
-    map_style='mapbox://styles/mapbox/dark-v10',
-    initial_view_state=pdk.ViewState(
-        latitude=38.9848,
-        longitude=-76.9368,
-        zoom=14,
-        pitch=0,
-    ),
+    map_style="mapbox://styles/mapbox/dark-v10" if mode == "Dark Mode" else "mapbox://styles/mapbox/light-v10",
+    initial_view_state=pdk.ViewState(latitude=38.9869, longitude=-76.9400, zoom=14, pitch=0),
     layers=[
         pdk.Layer(
-            'ScatterplotLayer',
-            data=apartment_coords,
+            "ScatterplotLayer",
+            data=apartment_locations,
             get_position='[lon, lat]',
-            get_fill_color='[255, 100, 100, 200]',
             get_radius=50,
-        ),
-        pdk.Layer(
-            "TextLayer",
-            data=apartment_coords,
-            get_position='[lon, lat]',
-            get_text="name",
-            get_color=[255, 255, 255],
-            get_size=12,
-            get_alignment_baseline="'bottom'",
+            get_fill_color=[200, 30, 0, 160],
+            pickable=True,
         )
-    ]
+    ],
+    tooltip={
+        "html": "<b>{name}</b><br><a href='{url}' target='_blank'>Visit Site</a>",
+        "style": {"color": "white"}
+    }
 ))
 
-# --- Notes on the Data ---
+# --- Notes ---
 st.markdown("""
 ---
 ### Notes on the Data
