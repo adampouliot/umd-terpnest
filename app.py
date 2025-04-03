@@ -16,20 +16,19 @@ st.set_page_config(
 # --- Hide Streamlit UI elements & apply custom font ---
 st.markdown("""
     <style>
-    /* Hide top Streamlit toolbar */
-    [data-testid="stToolbar"] {
-        visibility: hidden;
-    }
+    /* Import Inter font from Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-    /* Hide Streamlit's default footer and menu */
-    #MainMenu, footer {visibility: hidden;}
-
-    /* Apply custom font */
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Inter', sans-serif !important;
     }
+
+    /* Hide Streamlit UI elements */
+    [data-testid="stToolbar"] { visibility: hidden !important; }
+    #MainMenu, footer { visibility: hidden !important; }
     </style>
 """, unsafe_allow_html=True)
+
 
 # --- Load CSV ---
 try:
