@@ -16,6 +16,14 @@ def parse_minutes(value):
         return int(match.group(1)) if match else None
     return None
 
+# --- Safe wrapper for walk time ---
+def safe_walk_time(address, destination):
+    try:
+        return get_walking_time(address, destination)
+    except Exception as e:
+        print(f"Walk time error for {address} → {destination}: {e}")
+        return None
+
 # --- Page config ---
 st.set_page_config(
     page_title="TerpNest | UMD Apartment Finder",
@@ -96,9 +104,11 @@ filtered_df = df[
     )
 ].copy()
 
-# --- Walk Time ---
+# --- Walk Time with Spinner ---
 destination = UMD_SCHOOLS[school]
-filtered_df["walk_time_raw"] = filtered_df["address"].apply(lambda addr: get_walking_time(addr, destination))
+with st.spinner("Calculating walk times..."):
+    filtered_df["walk_time_raw"] = filtered_df["address"].apply(lambda addr: safe_walk_time(addr, destination))
+
 filtered_df["walk_time_mins"] = filtered_df["walk_time_raw"].apply(parse_minutes)
 filtered_df["walk time"] = filtered_df["walk_time_mins"].apply(
     lambda x: f"{int(x)} mins" if pd.notnull(x) else "N/A"
